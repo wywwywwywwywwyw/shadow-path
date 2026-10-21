@@ -356,16 +356,18 @@ const LEVELS = [
   {
     roman: 'III', name: '星夜',
     theme: THEMES[2],
-    post: { x: 3, z: 3 }, armR: 1.45, start: '0,6', startK: 7, gateX: 3,
-    pillars: [{ x: 4, z: 1, h: 1.2 }, { x: 2, z: 3, h: 1.2 }],
-    walls: [{ x: 2, z: 1, len: 2, axis: 'x', h: 1.0 }, { x: 2, z: 4, len: 2, axis: 'x', h: 1.0 }],
+    // Parking the lift at any one height, or only ever lowering or only ever raising it,
+    // leaves the door out of reach: it has to sink to be walked over, then rise twice to cast shade.
+    post: { x: 3, z: 3 }, armR: 1.45, start: '0,6', startK: 7, gateX: 1,
+    pillars: [{ x: 4, z: 5, h: 1.2 }],
+    walls: [{ x: 0, z: 3, len: 2, axis: 'z', h: 1.0 }, { x: 2, z: 3, len: 2, axis: 'z', h: 1.0 }],
     slider: null,
-    lift: { x: 1, z: 0, heights: [0, 1.2, 2.6], start: 2 },
+    lift: { x: 1, z: 2, heights: [0, 1.2, 2.6], start: 1 },
     towers: { backLeft: 'pyramid', backRight: 'cone', leftFront: 'dome' },
-    backWindows: [4.6, 5.5], leftWindows: [1.4, 2.9, 4.4],
-    intro: '后面那根柱子可以升降。上下拖动它，影子会变长变短',
-    goal: '柱子降到底，就成了一块能踩的石板',
-    card: { eyebrow: 'Chapter III · Complete', title: '夜归', line: '柱子沉进地面，成了她脚下的路，<br>她就这样走进了门。' },
+    backWindows: [3.6, 4.5, 5.4], leftWindows: [1.2, 5.0],
+    intro: '那根柱子可以升降。上下拖动它，影子会变长变短',
+    goal: '柱子降下能当路，升起能挡光，两样都要用上',
+    card: { eyebrow: 'Chapter III · Complete', title: '夜归', line: '柱子降下又升起，<br>她才穿过了这片月光。' },
   },
 ];
 
@@ -1609,7 +1611,6 @@ const hot = window.claude && window.claude.hot;
 if (hot && typeof hot.snapshot === 'function') hot.snapshot(() => ({ level: state.level, k: state.k, s: state.s, hi: state.hi, tile: walker.tile }));
 if (hot && typeof hot.ready === 'function') hot.ready(start);
 else start((hot && hot.data) || {});
-
 </script>
 </body>
 </html>
