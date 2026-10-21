@@ -4,13 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>影径</title>
-<meta name="description" content="一个关于光与影的等距小游戏：旅人只能走在影子里，转动光球，让小塔的影子替她铺出一条通往那扇门的路。">
+<meta name="description" content="一个关于光与影的等距小游戏：旅人只能走在影子里，转动光球、推动小塔，让影子替她铺出一条通往那扇门的路。">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Marcellus&family=ZCOOL+XiaoWei&display=swap">
 <style>
   :root {
-    /* Layout: full-bleed dusk sky with the floating court as the only subject; HUD pinned to the corners, end card as a centred veil */
+    /* Layout: full-bleed sky with the floating court as the only subject; HUD pinned to the corners, end card as a centred veil.
+       Each chapter swaps the sky and ink tokens below from script. */
     --sky-1: #ffe2cb;
     --sky-2: #f6bdb3;
     --sky-3: #bcaadb;
@@ -62,7 +63,8 @@
   .c3 { width: 58vmin; top: 66%; left: 6%; opacity: 0.75; animation-duration: 220s; }
   @keyframes drift { to { transform: translateX(16vw); } }
 
-  #stage { position: fixed; inset: 0; z-index: 1; }
+  #stage { position: fixed; inset: 0; z-index: 1; transition: opacity 0.45s ease; }
+  #stage.fading { opacity: 0; }
   #stage canvas { display: block; touch-action: none; outline: none; }
 
   .mist {
@@ -155,8 +157,8 @@
     color: var(--ink);
   }
   .card .line { margin: 0; font-size: 16px; line-height: 1.8; letter-spacing: 0.12em; color: var(--ink); }
+  .card-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; margin-top: 10px; }
   .text-btn {
-    margin-top: 10px;
     font: 400 15px/1 var(--font-display);
     letter-spacing: 0.3em;
     padding: 13px 22px 13px 26px;
@@ -168,6 +170,8 @@
     transition: background-color 0.2s, color 0.2s;
   }
   .text-btn:hover { background: var(--ink); color: var(--sky-1); }
+  .text-btn.primary { background: var(--ink); color: var(--sky-1); }
+  .text-btn.primary:hover { background: transparent; color: var(--ink); }
 
   @media (max-width: 480px) {
     .title h1 { letter-spacing: 0.22em; }
@@ -175,7 +179,7 @@
   }
   @media (prefers-reduced-motion: reduce) {
     .cloud { animation: none; }
-    .hint, .card { transition: none; }
+    .hint, .card, #stage { transition: none; }
   }
 </style>
 </head>
@@ -194,14 +198,14 @@
 <header class="hud">
   <div class="title">
     <h1>影径</h1>
-    <p>The Shadow Path · I</p>
+    <p id="chapter">The Shadow Path · I</p>
   </div>
   <div class="actions">
     <button id="btn-sound" class="icon-btn" type="button" aria-pressed="true" aria-label="声音">
       <svg class="on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4 4 0 0 1 0 6"/><path d="M18 6.5a7.5 7.5 0 0 1 0 11"/></svg>
       <svg class="off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M16 9.5l5 5M21 9.5l-5 5"/></svg>
     </button>
-    <button id="btn-reset" class="icon-btn" type="button" aria-label="重新开始">
+    <button id="btn-reset" class="icon-btn" type="button" aria-label="重新开始这一关">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3"/><path d="M4.5 4.5v4h4"/></svg>
     </button>
   </div>
@@ -211,10 +215,13 @@
 
 <section id="card" class="card" hidden aria-live="polite">
   <div class="card-inner">
-    <p class="eyebrow">Chapter I · Complete</p>
-    <h2>门开了</h2>
-    <p class="line">她踩着影子穿过庭院，<br>走进了那扇门。</p>
-    <button id="btn-again" class="text-btn" type="button">再走一次</button>
+    <p class="eyebrow" id="card-eyebrow"></p>
+    <h2 id="card-title"></h2>
+    <p class="line" id="card-line"></p>
+    <div class="card-actions">
+      <button id="btn-next" class="text-btn primary" type="button">下一关</button>
+      <button id="btn-again" class="text-btn" type="button">再走一次</button>
+    </div>
   </div>
 </section>
 
@@ -244,51 +251,108 @@ function fail(msg) {
 }
 window.__spireBooted = true;
 
-// ---------- level ----------
 const TAU = Math.PI * 2;
 const STEP = Math.PI / 4;             // the orb rests every 45 degrees
-const SWEEP = Math.PI / 180;          // safety check resolution while it moves
+const SWEEP = Math.PI / 180;          // safety check resolution while the orb moves
+const SLIDE_STEP = 0.02;              // safety check resolution while the tower slides
 const N = 7;
-const POST = { x: 3, z: 3 };
-const ARM_R = 1.45;
 const LAMP_Y = 2.1;
-const START = '6,6';
-const START_K = 5;
-const GATE = '1,-1';
-const GATE_IN = '1,0';
 const STEP_TIME = 0.42;
 
-// Every occluder is an axis-aligned box. The same boxes cast the rendered
-// shadow and decide which tiles she may stand on, so what you see is the rule.
-const PILLARS = [
-  { x: 3, z: 0, h: 2.7 },
-  { x: 1, z: 5, h: 2.7 },
-  { x: 3, z: 4, h: 1.2 },
+// ---------- chapters ----------
+// Both layouts were found and checked by a solver: each needs every mechanism it offers.
+const THEMES = [
+  {
+    css: { '--sky-1': '#ffe2cb', '--sky-2': '#f6bdb3', '--sky-3': '#bcaadb', '--mist-0': 'rgba(188, 170, 219, 0)', '--ink': '#463d70', '--ink-soft': '#776c9c', '--warm': '#c2553f', '--veil': 'rgba(255, 241, 234, 0.82)', '--line': 'rgba(70, 61, 112, 0.18)' },
+    floor: [0xf6ecf2, 0xefe3ec], plinth: 0xead8e4, plinthDeep: 0xdcc6da, stone: 0xf4e9f2, stoneWarm: 0xf0dee4,
+    roofA: 0xe9907c, roofB: 0x5a5596, move: 0x9fd3c7, groove: 0xbfa9c6, window: 0x8a7fb3, frame: 0xd9c9e3, door: 0x3f3a6e,
+    hemi: [0xe6dbff, 0xd6c6e6], orb: 0xffc08a, warm: 0xffb4a2,
+    light: { hemi: 1.1, key: 0.75, orb: 3.4 },
+  },
+  {
+    css: { '--sky-1': '#fff1d6', '--sky-2': '#c4ead9', '--sky-3': '#8ab9cf', '--mist-0': 'rgba(138, 185, 207, 0)', '--ink': '#22485a', '--ink-soft': '#4f7584', '--warm': '#c0532f', '--veil': 'rgba(246, 252, 248, 0.84)', '--line': 'rgba(34, 72, 90, 0.18)' },
+    floor: [0xf7efe2, 0xeee3d1], plinth: 0xe8dcc6, plinthDeep: 0xd5c7ab, stone: 0xf8f1e6, stoneWarm: 0xf0e3cf,
+    roofA: 0xe8875c, roofB: 0x2f7480, move: 0xf2917a, groove: 0xb59f7c, window: 0x5f97a0, frame: 0xcfe3df, door: 0x24485a,
+    // the sand floor is pale, so this chapter leans harder on the orb and a bluer sky light
+    hemi: [0xa8d6f0, 0xc7ddd6], orb: 0xffd29a, warm: 0xffc9a0,
+    light: { hemi: 0.9, key: 0.5, orb: 4.4 },
+  },
 ];
-const WALLS = [                       // low walls running along z
-  { x: 2, z0: 1, len: 3, h: 1.0 },
-  { x: 4, z0: 2, len: 3, h: 1.0 },
+const LEVELS = [
+  {
+    roman: 'I',
+    theme: THEMES[0],
+    post: { x: 3, z: 3 }, armR: 1.45, start: '6,6', startK: 5, gateX: 1,
+    pillars: [{ x: 3, z: 0, h: 2.7, top: 'dome' }, { x: 1, z: 5, h: 2.7, top: 'pyramid' }, { x: 3, z: 4, h: 1.2 }],
+    walls: [{ x: 2, z: 1, len: 3, axis: 'z', h: 1.0 }, { x: 4, z: 2, len: 3, axis: 'z', h: 1.0 }],
+    slider: null,
+    towers: { backLeft: 'dome', backRight: 'pyramid', leftFront: 'cone' },
+    backWindows: [4.5, 5.4], leftWindows: [1.3, 2.7, 4.1],
+    intro: '她只能走在影子里。拖动光球，影子会跟着转',
+    goal: '一边转动光球，一边走向那扇门',
+    card: { eyebrow: 'Chapter I · Complete', title: '门开了', line: '她踩着影子穿过庭院，<br>走进了那扇门。' },
+  },
+  {
+    roman: 'II',
+    theme: THEMES[1],
+    post: { x: 3, z: 3 }, armR: 1.45, start: '0,6', startK: 6, gateX: 2,
+    pillars: [{ x: 0, z: 3, h: 2.7, top: 'dome' }, { x: 1, z: 4, h: 1.2 }],
+    walls: [{ x: 1, z: 2, len: 3, axis: 'x', h: 1.0 }],
+    slider: { x: 4, z: 3, axis: 'z', n: 4, h: 1.8, start: 1 },
+    towers: { backLeft: 'cone', backRight: 'dome', leftFront: 'pyramid' },
+    backWindows: [3.6, 4.5, 5.4], leftWindows: [1.2, 4.8],
+    intro: '右边那座塔可以推动。拖动它，影子会跟着移动',
+    goal: '转光球、推小塔，替她铺出去门口的路',
+    card: { eyebrow: 'Chapter II · Complete', title: '海风起', line: '光转了三次，塔推了三回，<br>她终于走到了门前。' },
+  },
 ];
-const OCCLUDERS = [];
-PILLARS.forEach((p) => OCCLUDERS.push({ lo: [p.x - 0.35, 0, p.z - 0.35], hi: [p.x + 0.35, p.h, p.z + 0.35] }));
-WALLS.forEach((w) => OCCLUDERS.push({ lo: [w.x - 0.18, 0, w.z0 - 0.5], hi: [w.x + 0.18, w.h, w.z0 + w.len - 0.5] }));
 
+// ---------- the rules ----------
 const key = (x, z) => x + ',' + z;
-const BLOCKED = new Set([key(POST.x, POST.z)]);
-PILLARS.forEach((p) => BLOCKED.add(key(p.x, p.z)));
-WALLS.forEach((w) => { for (let i = 0; i < w.len; i++) BLOCKED.add(key(w.x, w.z0 + i)); });
-const TILES = new Map();
-for (let x = 0; x < N; x++) {
-  for (let z = 0; z < N; z++) {
-    if (!BLOCKED.has(key(x, z))) TILES.set(key(x, z), { id: key(x, z), x, z });
-  }
-}
-TILES.set(GATE, { id: GATE, x: 1, z: -1, gate: true });
+let L = null;                 // the current level
+let OCC = [];                 // static occluder boxes
+let BLOCKED = new Set();
+let TILES = new Map();
+let GATE = '', GATE_IN = '';
 
+function loadRules(level) {
+  L = level;
+  OCC = [];
+  level.pillars.forEach((p) => OCC.push({ lo: [p.x - 0.35, 0, p.z - 0.35], hi: [p.x + 0.35, p.h, p.z + 0.35] }));
+  level.walls.forEach((w) => OCC.push(w.axis === 'x'
+    ? { lo: [w.x - 0.5, 0, w.z - 0.18], hi: [w.x + w.len - 0.5, w.h, w.z + 0.18] }
+    : { lo: [w.x - 0.18, 0, w.z - 0.5], hi: [w.x + 0.18, w.h, w.z + w.len - 0.5] }));
+  BLOCKED = new Set([key(level.post.x, level.post.z)]);
+  level.pillars.forEach((p) => BLOCKED.add(key(p.x, p.z)));
+  level.walls.forEach((w) => { for (let i = 0; i < w.len; i++) BLOCKED.add(w.axis === 'x' ? key(w.x + i, w.z) : key(w.x, w.z + i)); });
+  TILES = new Map();
+  for (let x = 0; x < N; x++) {
+    for (let z = 0; z < N; z++) {
+      if (!BLOCKED.has(key(x, z))) TILES.set(key(x, z), { id: key(x, z), x, z });
+    }
+  }
+  GATE = key(level.gateX, -1);
+  GATE_IN = key(level.gateX, 0);
+  TILES.set(GATE, { id: GATE, x: level.gateX, z: -1, gate: true });
+}
+function sliderXZ(pos) {
+  const s = L.slider;
+  return s.axis === 'x' ? [s.x + pos, s.z] : [s.x, s.z + pos];
+}
+function sliderCell(pos) {
+  if (!L.slider) return null;
+  const [x, z] = sliderXZ(Math.round(pos));
+  return key(x, z);
+}
+function occludersAt(pos) {
+  if (!L.slider) return OCC;
+  const [x, z] = sliderXZ(pos);
+  return OCC.concat([{ lo: [x - 0.35, 0, z - 0.35], hi: [x + 0.35, L.slider.h, z + 0.35] }]);
+}
 function lampAt(theta, out) {
-  out[0] = POST.x + ARM_R * Math.cos(theta);
+  out[0] = L.post.x + L.armR * Math.cos(theta);
   out[1] = LAMP_Y;
-  out[2] = POST.z + ARM_R * Math.sin(theta);
+  out[2] = L.post.z + L.armR * Math.sin(theta);
   return out;
 }
 function segHitsBox(p, q, lo, hi) {
@@ -310,22 +374,23 @@ function segHitsBox(p, q, lo, hi) {
 // a tile is shadow when at least 3 of its 5 sample points cannot see the orb
 const SAMPLES = [[0, 0], [0.25, 0.25], [-0.25, 0.25], [0.25, -0.25], [-0.25, -0.25]];
 const _p = [0, 0.05, 0], _q = [0, 0, 0];
-function inShadow(tile, theta) {
+function inShadow(tile, theta, pos) {
   if (tile.gate) return true;
   lampAt(theta, _q);
+  const occ = occludersAt(pos);
   let dark = 0;
   for (const s of SAMPLES) {
     _p[0] = tile.x + s[0];
     _p[2] = tile.z + s[1];
-    for (const o of OCCLUDERS) {
+    for (const o of occ) {
       if (segHitsBox(_p, _q, o.lo, o.hi)) { dark++; break; }
     }
   }
   return dark >= 3;
 }
-function shadeAt(theta) {
-  const out = new Set();
-  TILES.forEach((t) => { if (inShadow(t, theta)) out.add(t.id); });
+function shadeAt(theta, pos) {
+  const out = new Set(), cell = sliderCell(pos);
+  TILES.forEach((t) => { if (t.id !== cell && inShadow(t, theta, pos)) out.add(t.id); });
   return out;
 }
 function neighbours(id) {
@@ -372,7 +437,7 @@ renderer.shadowMap.type = THREE.PCFShadowMap;
 renderer.shadowMap.autoUpdate = false;
 const canvas = renderer.domElement;
 canvas.setAttribute('role', 'img');
-canvas.setAttribute('aria-label', '黄昏里漂浮的庭院。旅人只能走在影子里，拖动或点击光球改变影子，点击影子里的石板让她走过去。键盘按 R 转动光球。');
+canvas.setAttribute('aria-label', '漂浮的庭院。旅人只能走在影子里，拖动或点击光球改变影子，第二关还可以拖动一座小塔，点击影子里的石板让她走过去。键盘按 R 转动光球。');
 stage.appendChild(canvas);
 
 const ISO = new THREE.Vector3(1, 1, 1).normalize();
@@ -383,70 +448,27 @@ const camera = new THREE.OrthographicCamera(-5, 5, 5, -5, 0.1, 500);
 camera.position.copy(ISO).multiplyScalar(150);
 camera.lookAt(0, 0, 0);
 
-// Flat, face-by-face shading like the first demo: lavender sky light everywhere,
-// a soft key light that separates top, left and right faces, and the warm orb on top.
-// (r160 uses physical light units, so these read about pi times the old values.)
-scene.add(new THREE.HemisphereLight(0xe6dbff, 0xd6c6e6, 1.1));
+// Flat, face-by-face shading like the first demo: sky light everywhere, a soft key light that
+// separates top, left and right faces, and the warm orb on top. (r160 uses physical light
+// units, so these read about pi times the old values.)
+const hemi = new THREE.HemisphereLight(0xffffff, 0xffffff, 1.1);
+scene.add(hemi);
 const keyLight = new THREE.DirectionalLight(0xffffff, 0.75);
 keyLight.position.set(0.15, 0.85, 0.5);
 scene.add(keyLight);
-const warmLight = new THREE.DirectionalLight(0xffb4a2, 0.35);
+const warmLight = new THREE.DirectionalLight(0xffffff, 0.35);
 warmLight.position.set(1, 0.1, -0.2);
 scene.add(warmLight);
 
-// ---------- materials ----------
-const lam = (c, o) => new THREE.MeshLambertMaterial(Object.assign({ color: c, flatShading: true }, o || {}));
-const MAT = {
-  floor: [lam(0xf6ecf2), lam(0xefe3ec)],
-  plinth: lam(0xead8e4),
-  plinthDeep: lam(0xdcc6da),
-  stone: lam(0xf4e9f2),
-  stoneWarm: lam(0xf0dee4),
-  coral: lam(0xe9907c),
-  indigo: lam(0x5a5596),
-  mint: lam(0x9fd3c7),
-  gold: lam(0xf2c76b, { emissive: 0x4a3200 }),
-  robe: lam(0xffffff, { emissive: 0x6b6070, flatShading: false }),
-  scarf: lam(0xf0857a, { emissive: 0x3a1410, flatShading: false }),
-};
-const flat = (c) => new THREE.MeshBasicMaterial({ color: c, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
-const DECAL = { window: flat(0x8a7fb3), frame: flat(0xd9c9e3) };
-
-// ---------- builders ----------
+// ---------- shared geometry ----------
 const BOX = new THREE.BoxGeometry(1, 1, 1);
-const pickables = [];
-function mesh(geo, mat, parent, opt) {
-  opt = opt || {};
-  const m = new THREE.Mesh(geo, mat);
-  m.castShadow = opt.cast !== false;
-  m.receiveShadow = opt.receive !== false;
-  (parent || scene).add(m);
-  if (opt.pick !== false) pickables.push(m);
-  return m;
-}
-function box(x, y, z, sx, sy, sz, mat, parent, opt) {
-  const m = mesh(BOX, mat, parent, opt);
-  m.position.set(x, y, z);
-  m.scale.set(sx, sy, sz);
-  return m;
-}
 const flatNormals = (g) => { const n = g.toNonIndexed(); n.computeVertexNormals(); return n; };
 const PYR_UP = (() => { const g = new THREE.ConeGeometry(Math.SQRT1_2, 1, 4); g.rotateY(Math.PI / 4); return flatNormals(g); })();
 const PYR_DOWN = (() => { const g = new THREE.ConeGeometry(Math.SQRT1_2, 1, 4); g.rotateY(Math.PI / 4); g.rotateX(Math.PI); return flatNormals(g); })();
-function pyramid(geo, x, yBase, z, w, h, d, mat, opt) {
-  const m = mesh(geo, mat, scene, opt);
-  m.scale.set(w, h, d);
-  m.position.set(x, geo === PYR_DOWN ? yBase - h / 2 : yBase + h / 2, z);
-  return m;
-}
-function dome(x, y, z, r, mat) {
-  return mesh(new THREE.SphereGeometry(r, 28, 14, 0, TAU, 0, Math.PI / 2), mat).position.set(x, y, z);
-}
-function finial(x, y, z, s) {
-  s = s || 1;
-  mesh(new THREE.CylinderGeometry(0.02 * s, 0.02 * s, 0.26 * s, 8), MAT.gold).position.set(x, y + 0.13 * s, z);
-  mesh(new THREE.SphereGeometry(0.055 * s, 14, 10), MAT.gold).position.set(x, y + 0.28 * s, z);
-}
+const DOME = new THREE.SphereGeometry(1, 28, 14, 0, TAU, 0, Math.PI / 2);
+const CONE = new THREE.ConeGeometry(1, 1, 32);
+const ROD = new THREE.CylinderGeometry(1, 1, 1, 8);
+const BALL = new THREE.SphereGeometry(1, 14, 10);
 function archGeo(w, h) {
   const r = w / 2, s = new THREE.Shape();
   s.moveTo(-r, 0);
@@ -457,109 +479,12 @@ function archGeo(w, h) {
   return new THREE.ShapeGeometry(s, 12);
 }
 const ARCH_WINDOW = archGeo(0.24, 0.42);
-// a flat arch on the visible +z or +x face of a block centred at (x, z) with the given half width
-function decal(x, y, z, face, half, geo, mat) {
-  const m = new THREE.Mesh(geo || ARCH_WINDOW, mat || DECAL.window);
-  if (face === 'x') { m.position.set(x + half + 0.003, y, z); m.rotation.y = Math.PI / 2; }
-  else m.position.set(x, y, z + half + 0.003);
-  scene.add(m);
-  return m;
-}
+const ARCH_FRAME = archGeo(0.74, 1.26);
+const ARCH_DOOR = archGeo(0.56, 1.12);
+const FLASH = new THREE.PlaneGeometry(0.92, 0.92);
+FLASH.rotateX(-Math.PI / 2);
+const SHARED_GEO = new Set([BOX, PYR_UP, PYR_DOWN, DOME, CONE, ROD, BALL, ARCH_WINDOW, ARCH_FRAME, ARCH_DOOR, FLASH]);
 
-// ---------- the floating court ----------
-for (let x = 0; x < N; x++) {
-  for (let z = 0; z < N; z++) {
-    const slab = box(x, -0.12, z, 0.97, 0.24, 0.97, MAT.floor[(x + z) % 2]);
-    if (TILES.has(key(x, z))) slab.userData.tile = key(x, z);
-  }
-}
-box(2.5, -0.55, 2.5, 8, 0.62, 8, MAT.plinth, scene, { cast: false });
-box(2.5, -1.06, 2.5, 7, 0.4, 7, MAT.plinthDeep, scene, { cast: false, pick: false });
-pyramid(PYR_DOWN, 2.5, -1.26, 2.5, 6, 3.4, 6, MAT.plinthDeep, { cast: false, pick: false });
-
-// back and left walls, a cornice, and three little towers in the old style
-const WALL_H = 2.3;
-box(2.5, WALL_H / 2, -1, 8, WALL_H, 1, MAT.stone);
-box(-1, WALL_H / 2, 3, 1, WALL_H, 7, MAT.stone);
-box(2.5, WALL_H + 0.05, -1, 8.12, 0.1, 1.12, MAT.stoneWarm);
-// the left cornice starts where the back one ends, so the corner has no overlapping faces
-box(-1, WALL_H + 0.05, 3.03, 1.12, 0.1, 6.94, MAT.stoneWarm);
-[4.5, 5.4].forEach((x) => decal(x, 1.0, -1, 'z', 0.5));
-[1.3, 2.7, 4.1].forEach((z) => decal(-1, 1.0, z, 'x', 0.5));
-
-box(-1, 1.6, -1, 1, 3.2, 1, MAT.stone);
-box(-1, 3.24, -1, 1.12, 0.1, 1.12, MAT.stoneWarm);
-dome(-1, 3.29, -1, 0.42, MAT.indigo);
-finial(-1, 3.68, -1, 1.2);
-decal(-1, 2.5, -1, 'z', 0.5);
-decal(-1, 2.5, -1, 'x', 0.5);
-
-box(6, 1.45, -1, 1, 2.9, 1, MAT.stone);
-pyramid(PYR_UP, 6, 2.9, -1, 1.04, 0.72, 1.04, MAT.indigo);
-finial(6, 3.6, -1);
-decal(6, 1.5, -1, 'x', 0.5);
-
-box(-1, 1.45, 6, 1, 2.9, 1, MAT.stone);
-mesh(new THREE.ConeGeometry(0.56, 0.8, 32), MAT.coral).position.set(-1, 3.3, 6);
-finial(-1, 3.68, 6);
-decal(-1, 1.5, 6, 'z', 0.5);
-
-// the door: an arch in the back wall that glows when she reaches it
-decal(1, 0, -1, 'z', 0.5, archGeo(0.74, 1.26), DECAL.frame);
-const doorMat = flat(0x3f3a6e);
-const door = decal(1, 0, -1, 'z', 0.503, archGeo(0.56, 1.12), doorMat);
-door.userData.tile = GATE;
-pickables.push(door);
-const doorFrom = new THREE.Color(0x3f3a6e), doorTo = new THREE.Color(0xffe2a0);
-
-// the occluders, dressed as small towers and garden walls. Everything above the orb's
-// height never reaches the floor shadow, so domes and roofs are free to overhang.
-{
-  const a = PILLARS[0];
-  box(a.x, 1.2, a.z, 0.7, 2.4, 0.7, MAT.stone);
-  box(a.x, 2.45, a.z, 0.84, 0.1, 0.84, MAT.stoneWarm);
-  dome(a.x, 2.5, a.z, 0.32, MAT.indigo);
-  finial(a.x, 2.8, a.z);
-  decal(a.x, 1.55, a.z, 'z', 0.35);
-  decal(a.x, 1.55, a.z, 'x', 0.35);
-  const b = PILLARS[1];
-  box(b.x, 1.2, b.z, 0.7, 2.4, 0.7, MAT.stone);
-  box(b.x, 2.45, b.z, 0.84, 0.1, 0.84, MAT.stoneWarm);
-  pyramid(PYR_UP, b.x, 2.5, b.z, 0.84, 0.6, 0.84, MAT.coral);
-  finial(b.x, 3.05, b.z);
-  decal(b.x, 1.55, b.z, 'z', 0.35);
-  decal(b.x, 1.55, b.z, 'x', 0.35);
-  const c = PILLARS[2];
-  box(c.x, 0.5, c.z, 0.7, 1.0, 0.7, MAT.mint);
-  box(c.x, 1.1, c.z, 0.7, 0.2, 0.7, MAT.stone);
-}
-WALLS.forEach((w) => {
-  const zc = w.z0 + (w.len - 1) / 2;
-  box(w.x, 0.43, zc, 0.36, 0.86, w.len, MAT.stone);
-  box(w.x, 0.93, zc, 0.36, 0.14, w.len, MAT.coral);
-});
-
-// ---------- the orb ----------
-const LAMP_PART = { cast: false, receive: false };
-const post = new THREE.Group();
-post.position.set(POST.x, 0, POST.z);
-scene.add(post);
-box(0, 0.08, 0, 0.32, 0.16, 0.32, MAT.stoneWarm, post, LAMP_PART).userData.lamp = true;
-box(0, (LAMP_Y + 0.12) / 2, 0, 0.08, LAMP_Y + 0.12, 0.08, MAT.stone, post, LAMP_PART).userData.lamp = true;
-box(0, LAMP_Y + 0.16, 0, 0.16, 0.08, 0.16, MAT.gold, post, LAMP_PART).userData.lamp = true;
-
-const arm = new THREE.Group();
-arm.position.y = LAMP_Y;
-post.add(arm);
-box(ARM_R / 2, 0, 0, ARM_R, 0.06, 0.06, MAT.mint, arm, LAMP_PART).userData.lamp = true;
-
-const orbGroup = new THREE.Group();
-orbGroup.position.x = ARM_R;
-arm.add(orbGroup);
-const orb = mesh(new THREE.SphereGeometry(0.17, 32, 20), new THREE.MeshBasicMaterial({ color: 0xfff3d1 }), orbGroup, LAMP_PART);
-orb.userData.lamp = true;
-const grab = mesh(new THREE.SphereGeometry(0.5, 12, 8), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }), orbGroup, LAMP_PART);
-grab.userData.lamp = true;
 const glowTex = (() => {
   const c = document.createElement('canvas');
   c.width = c.height = 128;
@@ -572,39 +497,32 @@ const glowTex = (() => {
   t.colorSpace = THREE.SRGBColorSpace;
   return t;
 })();
-const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, depthWrite: false, transparent: true }));
-glow.scale.setScalar(1.1);
-orbGroup.add(glow);
 
-const lampLight = new THREE.PointLight(0xffc08a, 3.4, 0, 0);
-lampLight.castShadow = true;
-lampLight.shadow.mapSize.set(1024, 1024);
-lampLight.shadow.bias = -0.002;
-lampLight.shadow.normalBias = 0.02;
-lampLight.shadow.camera.near = 0.05;
-lampLight.shadow.camera.far = 14;
-orbGroup.add(lampLight);
-
-// ---------- the traveller ----------
+// ---------- the traveller (lives across levels) ----------
+const lam = (c, o) => new THREE.MeshLambertMaterial(Object.assign({ color: c, flatShading: true }, o || {}));
+const robeMat = lam(0xffffff, { emissive: 0x6b6070, flatShading: false });
+const scarfMat = lam(0xf0857a, { emissive: 0x3a1410, flatShading: false });
 const char = new THREE.Group();
 char.scale.setScalar(1.15);
 scene.add(char);
 const body = new THREE.Group();
 char.add(body);
-const robe = new THREE.Mesh(new THREE.ConeGeometry(0.15, 0.42, 28), MAT.robe);
-robe.position.y = 0.21;
-const scarf = new THREE.Mesh(new THREE.TorusGeometry(0.075, 0.028, 10, 28), MAT.scarf);
-scarf.rotation.x = Math.PI / 2;
-scarf.position.y = 0.39;
-const tail = new THREE.Mesh(BOX, MAT.scarf);
-tail.scale.set(0.05, 0.17, 0.03);
-tail.position.set(0.03, 0.31, -0.1);
-tail.rotation.x = -0.4;
-const head = new THREE.Mesh(new THREE.SphereGeometry(0.085, 20, 14), MAT.robe);
-head.position.y = 0.48;
-const hat = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.3, 24), MAT.robe);
-hat.position.y = 0.68;
-body.add(robe, scarf, tail, head, hat);
+{
+  const robe = new THREE.Mesh(new THREE.ConeGeometry(0.15, 0.42, 28), robeMat);
+  robe.position.y = 0.21;
+  const scarf = new THREE.Mesh(new THREE.TorusGeometry(0.075, 0.028, 10, 28), scarfMat);
+  scarf.rotation.x = Math.PI / 2;
+  scarf.position.y = 0.39;
+  const tail = new THREE.Mesh(BOX, scarfMat);
+  tail.scale.set(0.05, 0.17, 0.03);
+  tail.position.set(0.03, 0.31, -0.1);
+  tail.rotation.x = -0.4;
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.085, 20, 14), robeMat);
+  head.position.y = 0.48;
+  const hat = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.3, 24), robeMat);
+  hat.position.y = 0.68;
+  body.add(robe, scarf, tail, head, hat);
+}
 let facing = -Math.PI * 3 / 4;
 const turnToward = (cur, target, k) => {
   let d = (target - cur) % TAU;
@@ -613,16 +531,256 @@ const turnToward = (cur, target, k) => {
   return cur + d * Math.min(1, k);
 };
 
-// a lit tile she cannot step on flashes coral for a moment
-const FLASH = new THREE.PlaneGeometry(0.92, 0.92);
-FLASH.rotateX(-Math.PI / 2);
+// ---------- building a level ----------
+let world = null;
+let pickables = [];
+let M = null;                 // materials for the current theme
+let arm, orb, lampLight, sliderGroup, doorMat;
+let doorFrom = new THREE.Color(), doorTo = new THREE.Color(0xffe2a0);
+
+function mesh(geo, mat, parent, opt) {
+  opt = opt || {};
+  const m = new THREE.Mesh(geo, mat);
+  m.castShadow = opt.cast !== false;
+  m.receiveShadow = opt.receive !== false;
+  (parent || world).add(m);
+  if (opt.pick !== false) pickables.push(m);
+  return m;
+}
+function box(x, y, z, sx, sy, sz, mat, parent, opt) {
+  const m = mesh(BOX, mat, parent, opt);
+  m.position.set(x, y, z);
+  m.scale.set(sx, sy, sz);
+  return m;
+}
+function pyramid(x, yBase, z, w, h, mat) {
+  const m = mesh(PYR_UP, mat);
+  m.scale.set(w, h, w);
+  m.position.set(x, yBase + h / 2, z);
+  return m;
+}
+function dome(x, y, z, r, mat) {
+  const m = mesh(DOME, mat);
+  m.scale.setScalar(r);
+  m.position.set(x, y, z);
+  return m;
+}
+function cone(x, yBase, z, r, h, mat) {
+  const m = mesh(CONE, mat);
+  m.scale.set(r, h, r);
+  m.position.set(x, yBase + h / 2, z);
+  return m;
+}
+function finial(x, y, z, s) {
+  s = s || 1;
+  const r = mesh(ROD, M.gold);
+  r.scale.set(0.02 * s, 0.26 * s, 0.02 * s);
+  r.position.set(x, y + 0.13 * s, z);
+  const b = mesh(BALL, M.gold);
+  b.scale.setScalar(0.055 * s);
+  b.position.set(x, y + 0.28 * s, z);
+}
+function roof(kind, x, y, z, size) {
+  if (kind === 'dome') { dome(x, y, z, size * 0.42, M.roofB); finial(x, y + size * 0.4, z, size * 1.1); }
+  else if (kind === 'pyramid') { pyramid(x, y, z, size * 1.04, size * 0.72, M.roofB); finial(x, y + size * 0.7, z); }
+  else { cone(x, y, z, size * 0.56, size * 0.8, M.roofA); finial(x, y + size * 0.78, z); }
+}
+// a flat arch on the visible +z or +x face of a block centred at (x, z) with the given half width
+function decal(x, y, z, face, half, geo, mat) {
+  const m = new THREE.Mesh(geo || ARCH_WINDOW, mat || M.window);
+  if (face === 'x') { m.position.set(x + half + 0.003, y, z); m.rotation.y = Math.PI / 2; }
+  else m.position.set(x, y, z + half + 0.003);
+  world.add(m);
+  return m;
+}
+
+function makeMaterials(t) {
+  const flat = (c) => new THREE.MeshBasicMaterial({ color: c, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
+  return {
+    floor: t.floor.map((c) => lam(c)),
+    plinth: lam(t.plinth), plinthDeep: lam(t.plinthDeep),
+    stone: lam(t.stone), stoneWarm: lam(t.stoneWarm),
+    roofA: lam(t.roofA), roofB: lam(t.roofB), move: lam(t.move),
+    gold: lam(0xf2c76b, { emissive: 0x4a3200 }),
+    groove: new THREE.MeshBasicMaterial({ color: t.groove, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 }),
+    window: flat(t.window), frame: flat(t.frame), door: flat(t.door),
+    orb: new THREE.MeshBasicMaterial({ color: 0xfff3d1 }),
+    grab: new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }),
+  };
+}
+
+function teardown() {
+  if (!world) return;
+  if (lampLight) lampLight.dispose();
+  const themed = new Set(Object.values(M).flat());
+  world.traverse((o) => {
+    if (o.geometry && !SHARED_GEO.has(o.geometry)) o.geometry.dispose();
+    if (o.material && !themed.has(o.material)) o.material.dispose();
+  });
+  themed.forEach((m) => m.dispose());
+  flashes.length = 0;
+  scene.remove(world);
+  world = null;
+}
+
+function buildLevel(level) {
+  teardown();
+  loadRules(level);
+  const t = level.theme;
+  M = makeMaterials(t);
+  world = new THREE.Group();
+  scene.add(world);
+  pickables = [];
+  Object.entries(t.css).forEach(([k, v]) => document.documentElement.style.setProperty(k, v));
+  hemi.color.set(t.hemi[0]);
+  hemi.groundColor.set(t.hemi[1]);
+  hemi.intensity = t.light.hemi;
+  keyLight.intensity = t.light.key;
+  warmLight.color.set(t.warm);
+  document.getElementById('chapter').textContent = 'The Shadow Path · ' + level.roman;
+
+  // the floating court
+  for (let x = 0; x < N; x++) {
+    for (let z = 0; z < N; z++) {
+      const slab = box(x, -0.12, z, 0.97, 0.24, 0.97, M.floor[(x + z) % 2]);
+      slab.userData.tile = key(x, z);
+    }
+  }
+  box(2.5, -0.55, 2.5, 8, 0.62, 8, M.plinth, null, { cast: false });
+  box(2.5, -1.06, 2.5, 7, 0.4, 7, M.plinthDeep, null, { cast: false, pick: false });
+  const keel = mesh(PYR_DOWN, M.plinthDeep, null, { cast: false, pick: false });
+  keel.scale.set(6, 3.4, 6);
+  keel.position.set(2.5, -1.26 - 1.7, 2.5);
+
+  // walls, cornice and three corner towers
+  const WALL_H = 2.3;
+  box(2.5, WALL_H / 2, -1, 8, WALL_H, 1, M.stone);
+  box(-1, WALL_H / 2, 3, 1, WALL_H, 7, M.stone);
+  box(2.5, WALL_H + 0.05, -1, 8.12, 0.1, 1.12, M.stoneWarm);
+  // the left cornice starts where the back one ends, so the corner has no overlapping faces
+  box(-1, WALL_H + 0.05, 3.03, 1.12, 0.1, 6.94, M.stoneWarm);
+  level.backWindows.forEach((x) => decal(x, 1.0, -1, 'z', 0.5));
+  level.leftWindows.forEach((z) => decal(-1, 1.0, z, 'x', 0.5));
+
+  box(-1, 1.6, -1, 1, 3.2, 1, M.stone);
+  box(-1, 3.24, -1, 1.12, 0.1, 1.12, M.stoneWarm);
+  roof(level.towers.backLeft, -1, 3.29, -1, 1);
+  decal(-1, 2.5, -1, 'z', 0.5);
+  decal(-1, 2.5, -1, 'x', 0.5);
+  box(6, 1.45, -1, 1, 2.9, 1, M.stone);
+  box(6, 2.95, -1, 1.12, 0.1, 1.12, M.stoneWarm);
+  roof(level.towers.backRight, 6, 3.0, -1, 1);
+  decal(6, 1.5, -1, 'x', 0.5);
+  box(-1, 1.45, 6, 1, 2.9, 1, M.stone);
+  box(-1, 2.95, 6, 1.12, 0.1, 1.12, M.stoneWarm);
+  roof(level.towers.leftFront, -1, 3.0, 6, 1);
+  decal(-1, 1.5, 6, 'z', 0.5);
+
+  // the door glows when she reaches it
+  decal(level.gateX, 0, -1, 'z', 0.5, ARCH_FRAME, M.frame);
+  doorMat = M.door;
+  doorFrom.copy(M.door.color);
+  const door = decal(level.gateX, 0, -1, 'z', 0.503, ARCH_DOOR, M.door);
+  door.userData.tile = GATE;
+  pickables.push(door);
+
+  // occluders, dressed as small towers and garden walls. Everything above the orb's height
+  // never reaches the floor shadow, so domes and roofs are free to overhang.
+  level.pillars.forEach((p) => {
+    if (p.h > 2) {
+      box(p.x, 1.2, p.z, 0.7, 2.4, 0.7, M.stone);
+      box(p.x, 2.45, p.z, 0.84, 0.1, 0.84, M.stoneWarm);
+      roof(p.top, p.x, 2.5, p.z, 0.8);
+      decal(p.x, 1.55, p.z, 'z', 0.35);
+      decal(p.x, 1.55, p.z, 'x', 0.35);
+    } else {
+      box(p.x, (p.h - 0.2) / 2, p.z, 0.7, p.h - 0.2, 0.7, M.stoneWarm);
+      box(p.x, p.h - 0.1, p.z, 0.7, 0.2, 0.7, M.roofA);
+    }
+  });
+  level.walls.forEach((w) => {
+    const c = (w.len - 1) / 2;
+    const [cx, cz, sx, sz] = w.axis === 'x' ? [w.x + c, w.z, w.len, 0.36] : [w.x, w.z + c, 0.36, w.len];
+    box(cx, 0.43, cz, sx, 0.86, sz, M.stone);
+    box(cx, 0.93, cz, sx, 0.14, sz, M.roofA);
+  });
+
+  // the sliding tower: a groove in the floor shows its track
+  sliderGroup = null;
+  if (level.slider) {
+    const s = level.slider;
+    const [ax, az] = sliderXZ(0), [bx, bz] = sliderXZ(s.n - 1);
+    const len = s.n - 1 + 0.7;
+    const groove = new THREE.Mesh(BOX, M.groove);
+    groove.scale.set(s.axis === 'x' ? len : 0.1, 0.01, s.axis === 'x' ? 0.1 : len);
+    groove.position.set((ax + bx) / 2, 0.006, (az + bz) / 2);
+    world.add(groove);
+    for (let i = 0; i < s.n; i++) {
+      const [x, z] = sliderXZ(i);
+      const notch = new THREE.Mesh(BOX, M.groove);
+      notch.scale.set(s.axis === 'x' ? 0.06 : 0.3, 0.01, s.axis === 'x' ? 0.3 : 0.06);
+      notch.position.set(x, 0.006, z);
+      world.add(notch);
+    }
+    sliderGroup = new THREE.Group();
+    world.add(sliderGroup);
+    const SLIDE = { pick: true };
+    const parts = [
+      box(0, (s.h - 0.24) / 2, 0, 0.7, s.h - 0.24, 0.7, M.move, sliderGroup, SLIDE),
+      box(0, s.h - 0.12, 0, 0.7, 0.24, 0.7, M.stone, sliderGroup, SLIDE),
+      box(0, 0.22, 0, 0.71, 0.06, 0.71, M.stoneWarm, sliderGroup, SLIDE),
+    ];
+    parts.forEach((m) => { m.userData.slider = true; });
+    // two engraved bands on each visible face say "this one moves"
+    [0.62, 0.98].forEach((y) => {
+      ['x', 'z'].forEach((f) => {
+        const band = new THREE.Mesh(BOX, M.groove);
+        band.scale.set(f === 'x' ? 0.004 : 0.5, 0.05, f === 'x' ? 0.5 : 0.004);
+        band.position.set(f === 'x' ? 0.352 : 0, y, f === 'x' ? 0 : 0.352);
+        sliderGroup.add(band);
+      });
+    });
+  }
+
+  // the orb on its arm
+  const LAMP_PART = { cast: false, receive: false };
+  const post = new THREE.Group();
+  post.position.set(level.post.x, 0, level.post.z);
+  world.add(post);
+  box(0, 0.08, 0, 0.32, 0.16, 0.32, M.stoneWarm, post, LAMP_PART).userData.lamp = true;
+  box(0, (LAMP_Y + 0.12) / 2, 0, 0.08, LAMP_Y + 0.12, 0.08, M.stone, post, LAMP_PART).userData.lamp = true;
+  box(0, LAMP_Y + 0.16, 0, 0.16, 0.08, 0.16, M.gold, post, LAMP_PART).userData.lamp = true;
+  arm = new THREE.Group();
+  arm.position.y = LAMP_Y;
+  post.add(arm);
+  box(level.armR / 2, 0, 0, level.armR, 0.06, 0.06, M.move, arm, LAMP_PART).userData.lamp = true;
+  const orbGroup = new THREE.Group();
+  orbGroup.position.x = level.armR;
+  arm.add(orbGroup);
+  orb = mesh(new THREE.SphereGeometry(0.17, 32, 20), M.orb, orbGroup, LAMP_PART);
+  orb.userData.lamp = true;
+  mesh(new THREE.SphereGeometry(0.5, 12, 8), M.grab, orbGroup, LAMP_PART).userData.lamp = true;
+  const glow = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, depthWrite: false, transparent: true }));
+  glow.scale.setScalar(1.1);
+  orbGroup.add(glow);
+  lampLight = new THREE.PointLight(t.orb, t.light.orb, 0, 0);
+  lampLight.castShadow = true;
+  lampLight.shadow.mapSize.set(1024, 1024);
+  lampLight.shadow.bias = -0.002;
+  lampLight.shadow.normalBias = 0.02;
+  lampLight.shadow.camera.near = 0.05;
+  lampLight.shadow.camera.far = 14;
+  orbGroup.add(lampLight);
+}
+
+// a lit tile she cannot step on flashes for a moment
 const flashes = [];
 function flashTile(id) {
   const t = TILES.get(id);
   const m = new THREE.Mesh(FLASH, new THREE.MeshBasicMaterial({ color: 0xf0857a, transparent: true, opacity: 0.55, depthWrite: false }));
   m.position.set(t.x, 0.012, t.z);
   m.renderOrder = 2;
-  scene.add(m);
+  world.add(m);
   flashes.push({ m, t: 0 });
 }
 
@@ -713,6 +871,7 @@ const Sound = {
     o.stop(t + 0.55);
   },
   rest() { this.bell(880, 0, 0.06, 2.2); this.bell(1318.5, 0.12, 0.045, 2.4); },
+  grind() { this.thud(); this.bell(440, 0.05, 0.04, 1.2); },
   blocked() { this.thud(); this.bell(207.65, 0.02, 0.05, 0.6); },
   nope() { this.bell(220, 0, 0.04, 0.35); },
   win() { [293.66, 369.99, 440, 587.33, 739.99, 880, 1174.66].forEach((f, i) => this.bell(f, i * 0.14, 0.09, 2.8)); },
@@ -753,11 +912,12 @@ const Sound = {
 };
 
 // ---------- state ----------
-const state = { theta: START_K * STEP, k: START_K, won: false, moved: false, rotated: false, winT: -1, shake: 0, shiver: 0 };
+const state = { level: 0, theta: 0, k: 0, pos: 0, s: 0, won: false, moved: false, rotated: false, slid: false, winT: -1, shake: 0, shiver: 0 };
 let shade = new Set();
-const walker = { tile: START, step: null, path: [], pending: null, exit: null };
-let lampAnim = null;
+const walker = { tile: '', step: null, path: [], pending: null, exit: null };
+let lampAnim = null, slideAnim = null;
 const mod8 = (k) => ((k % 8) + 8) % 8;
+const busy = () => state.won || !!walker.step || !!lampAnim || !!slideAnim;
 
 function tileWorld(id, out) {
   const t = TILES.get(id);
@@ -768,44 +928,76 @@ function setLampTheta(theta) {
   arm.rotation.y = -theta;
   renderer.shadowMap.needsUpdate = true;
 }
+function setSliderPos(pos) {
+  state.pos = pos;
+  const [x, z] = sliderXZ(pos);
+  sliderGroup.position.set(x, 0, z);
+  renderer.shadowMap.needsUpdate = true;
+}
 // how far the orb can travel toward `to` before its light would reach her
-function safeReach(from, to) {
+function lampReach(from, to) {
   const tile = TILES.get(walker.tile);
   const dir = Math.sign(to - from);
   let a = from;
   while (Math.abs(to - a) > 1e-9) {
     const next = Math.abs(to - a) <= SWEEP ? to : a + dir * SWEEP;
-    if (!inShadow(tile, next)) return { angle: a, blocked: true };
+    if (!inShadow(tile, next, state.pos)) return { at: a, blocked: 'light' };
     a = next;
   }
-  return { angle: a, blocked: false };
+  return { at: a, blocked: false };
+}
+// how far the tower can slide toward `to` before it would hit her or let the light reach her
+function slideReach(from, to) {
+  const tile = TILES.get(walker.tile), s = L.slider;
+  const onTrack = s.axis === 'x' ? tile.z === s.z : tile.x === s.x;
+  const her = onTrack ? (s.axis === 'x' ? tile.x - s.x : tile.z - s.z) : null;
+  const dir = Math.sign(to - from);
+  let p = from;
+  while (Math.abs(to - p) > 1e-9) {
+    const next = Math.abs(to - p) <= SLIDE_STEP ? to : p + dir * SLIDE_STEP;
+    if (her !== null && Math.abs(next - her) < 0.999) return { at: p, blocked: 'body' };
+    if (!inShadow(tile, state.theta, next)) return { at: p, blocked: 'light' };
+    p = next;
+  }
+  return { at: p, blocked: false };
+}
+function settle() {
+  shade = shadeAt(state.theta, state.pos);
+  updateHint();
 }
 function settleLamp(theta) {
   const before = state.k;
   state.k = mod8(Math.round(theta / STEP));
   setLampTheta(theta);
-  shade = shadeAt(theta);
-  if (state.k !== before) {
-    state.rotated = true;
-    Sound.rest();
-  }
-  updateHint();
+  if (state.k !== before) { state.rotated = true; Sound.rest(); }
+  settle();
 }
-function animateLamp(to, dur) {
-  lampAnim = { from: state.theta, to, t: 0, dur: dur || 0.32 + 0.3 * Math.min(2, Math.abs(to - state.theta) / STEP) };
+function settleSlider(pos) {
+  const before = state.s;
+  state.s = Math.round(pos);
+  setSliderPos(state.s);
+  if (state.s !== before) { state.slid = true; Sound.grind(); }
+  settle();
+}
+function animateLamp(to) {
+  lampAnim = { from: state.theta, to, t: 0, dur: 0.32 + 0.3 * Math.min(2, Math.abs(to - state.theta) / STEP) };
+}
+function animateSlider(to) {
+  slideAnim = { from: state.pos, to, t: 0, dur: 0.25 + 0.25 * Math.min(2, Math.abs(to - state.pos)) };
 }
 function rotateBy(n) {
-  if (state.won || walker.step || lampAnim) return;
+  if (busy()) return;
   const target = (Math.round(state.theta / STEP) + n) * STEP;
-  const r = safeReach(state.theta, target);
-  if (r.blocked) { onBlocked(); return; }
+  const r = lampReach(state.theta, target);
+  if (r.blocked) { onBlocked('light'); return; }
   animateLamp(target);
 }
-function onBlocked() {
+function onBlocked(why, what) {
   state.shake = 1;
   state.shiver = 1;
   Sound.blocked();
-  flashHint('再转下去，光就会照到她', true);
+  if (why === 'body') flashHint('她挡在路上，塔推不过去', true);
+  else flashHint(what === 'slider' ? '再推下去，光就会照到她' : '再转下去，光就会照到她', true);
 }
 
 // ---------- hints ----------
@@ -830,15 +1022,17 @@ function flashHint(text, warm) {
 function updateHint() {
   if (flashing) return;
   if (state.won) return showHint('');
-  if (!state.rotated && !state.moved) return showHint('她只能走在影子里。拖动光球，影子会跟着转');
+  if (!state.rotated && !state.moved && !state.slid) return showHint(L.intro);
   if (findPath(walker.tile, GATE_IN, shade)) return showHint('门就在前面');
-  if (state.rotated && !state.moved) return showHint('点影子里的石板，带她过去');
-  return showHint('一边转动光球，一边走向那扇门');
+  if ((state.rotated || state.slid) && !state.moved) return showHint('点影子里的石板，带她过去');
+  if (L.slider && !state.slid) return showHint('别忘了那座可以推动的塔');
+  return showHint(L.goal);
 }
 
 // ---------- walking ----------
 function walkTo(id) {
-  if (state.won || lampAnim || (press && press.dragging)) return;
+  if (state.won || lampAnim || slideAnim || (press && press.dragging)) return;
+  if (!TILES.has(id)) return;
   if (!shade.has(id)) {
     flashTile(id);
     Sound.nope();
@@ -850,7 +1044,7 @@ function walkTo(id) {
   const path = findPath(walker.tile, id, shade);
   if (!path) {
     Sound.nope();
-    flashHint('影子没有连到那里，转一转光球', true);
+    flashHint(L.slider ? '影子没有连到那里，转一转光球或推一推塔' : '影子没有连到那里，转一转光球', true);
     return;
   }
   walker.path = path.slice(1);
@@ -888,8 +1082,8 @@ function updateWalker(dt) {
   if (walker.exit) {
     const e = walker.exit;
     e.t = Math.min(1, e.t + dt / 1.4);
-    char.position.set(1, 0, -1 - 0.5 * e.t);
-    MAT.robe.opacity = MAT.scarf.opacity = 1 - e.t;
+    char.position.set(L.gateX, 0, -1 - 0.5 * e.t);
+    robeMat.opacity = scarfMat.opacity = 1 - e.t;
     return;
   }
   body.position.y = 0;
@@ -897,61 +1091,91 @@ function updateWalker(dt) {
   body.rotation.z = state.shiver > 0 ? Math.sin(clock.t * 50) * 0.08 * state.shiver : 0;
 }
 
-// ---------- win / reset ----------
+// ---------- win / levels ----------
 const card = document.getElementById('card');
+const nextBtn = document.getElementById('btn-next');
+function saveLevel(i) { try { localStorage.setItem('shadow-path-level', String(i)); } catch (e) { /* storage unavailable */ } }
+function savedLevel() {
+  try {
+    const v = parseInt(localStorage.getItem('shadow-path-level'), 10);
+    return Number.isInteger(v) && v >= 0 && v < LEVELS.length ? v : 0;
+  } catch (e) { return 0; }
+}
 function win() {
   state.won = true;
   state.winT = 0;
   showHint('');
   Sound.win();
   facing = Math.PI;
-  MAT.robe.transparent = MAT.scarf.transparent = true;
+  robeMat.transparent = scarfMat.transparent = true;
   walker.exit = { t: 0 };
+  const last = state.level === LEVELS.length - 1;
+  if (!last) saveLevel(state.level + 1);
+  document.getElementById('card-eyebrow').textContent = L.card.eyebrow;
+  document.getElementById('card-title').textContent = L.card.title;
+  document.getElementById('card-line').innerHTML = L.card.line;
+  nextBtn.textContent = last ? '从第一关开始' : '下一关';
   setTimeout(() => {
     if (!state.won) return;
     card.hidden = false;
     requestAnimationFrame(() => card.classList.add('show'));
-    document.getElementById('btn-again').focus({ preventScroll: true });
+    nextBtn.focus({ preventScroll: true });
   }, 1900);
 }
-function reset(data) {
+function resetLevel(data) {
   state.won = false;
   state.winT = -1;
-  state.moved = false;
-  state.rotated = false;
+  state.moved = state.rotated = state.slid = false;
   state.shake = state.shiver = 0;
   card.classList.remove('show');
   card.hidden = true;
-  lampAnim = null;
+  lampAnim = slideAnim = null;
   walker.step = null;
   walker.path = [];
   walker.pending = null;
   walker.exit = null;
-  MAT.robe.transparent = MAT.scarf.transparent = false;
-  MAT.robe.opacity = MAT.scarf.opacity = 1;
+  robeMat.transparent = scarfMat.transparent = false;
+  robeMat.opacity = scarfMat.opacity = 1;
   doorMat.color.copy(doorFrom);
   body.rotation.z = 0;
-  let k = START_K, tile = START;
+  let k = L.startK, s = L.slider ? L.slider.start : 0, tile = L.start;
   if (data && Number.isInteger(data.k) && TILES.has(data.tile) && data.tile !== GATE) {
-    const s = shadeAt(data.k * STEP);
-    if (s.has(data.tile)) { k = data.k; tile = data.tile; }
+    const ds = L.slider && Number.isInteger(data.s) ? data.s : s;
+    if (shadeAt(data.k * STEP, ds).has(data.tile)) { k = data.k; s = ds; tile = data.tile; }
   }
   walker.tile = tile;
   state.k = k;
-  state.theta = k * STEP;
-  setLampTheta(state.theta);
-  shade = shadeAt(state.theta);
-  state.rotated = state.moved = tile !== START;
+  state.s = s;
+  setLampTheta(k * STEP);
+  state.pos = s;
+  if (L.slider) setSliderPos(s);
+  shade = shadeAt(state.theta, state.pos);
+  state.rotated = state.moved = tile !== L.start;
   tileWorld(tile, char.position);
-  facing = char.rotation.y = -Math.PI * 3 / 4;
+  facing = char.rotation.y = tile === '0,6' ? -Math.PI / 2 : -Math.PI * 3 / 4;
   flashing = false;
   updateHint();
+}
+function enterLevel(i, data) {
+  state.level = i;
+  saveLevel(i);
+  buildLevel(LEVELS[i]);
+  resetLevel(data);
+}
+function changeLevel(i) {
+  stage.classList.add('fading');
+  card.classList.remove('show');
+  setTimeout(() => {
+    enterLevel(i);
+    stage.classList.remove('fading');
+  }, 450);
 }
 
 // ---------- input ----------
 const raycaster = new THREE.Raycaster();
 const ndc = new THREE.Vector2();
 const lampPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -LAMP_Y);
+const slidePlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -0.9);
 const tmp = new THREE.Vector3();
 function aim(cx, cy) {
   const r = canvas.getBoundingClientRect();
@@ -962,8 +1186,10 @@ function hitAt(cx, cy) {
   aim(cx, cy);
   const hits = raycaster.intersectObjects(pickables, false);
   for (const h of hits) {
-    if (h.object.userData.lamp) return { lamp: true };
-    if (h.object.userData.tile) return { tile: h.object.userData.tile };
+    const ud = h.object.userData;
+    if (ud.lamp) return { lamp: true };
+    if (ud.slider) return { slider: true };
+    if (ud.tile) return { tile: ud.tile };
     return null;
   }
   return null;
@@ -971,7 +1197,12 @@ function hitAt(cx, cy) {
 function angleAt(cx, cy) {
   aim(cx, cy);
   if (!raycaster.ray.intersectPlane(lampPlane, tmp)) return null;
-  return Math.atan2(tmp.z - POST.z, tmp.x - POST.x);
+  return Math.atan2(tmp.z - L.post.z, tmp.x - L.post.x);
+}
+function trackAt(cx, cy) {
+  aim(cx, cy);
+  if (!raycaster.ray.intersectPlane(slidePlane, tmp)) return null;
+  return L.slider.axis === 'x' ? tmp.x - L.slider.x : tmp.z - L.slider.z;
 }
 
 let press = null;
@@ -980,11 +1211,20 @@ canvas.addEventListener('pointerdown', (e) => {
   if (state.won || press) return;
   const hit = hitAt(e.clientX, e.clientY);
   press = { id: e.pointerId, x: e.clientX, y: e.clientY, hit, moved: 0, dragging: false };
-  if (hit && hit.lamp && !walker.step && !lampAnim) {
-    press.last = angleAt(e.clientX, e.clientY);
-    press.base = state.theta;
-    press.acc = 0;
-    press.startTheta = state.theta;
+  if (hit && !busy()) {
+    if (hit.lamp) {
+      press.kind = 'lamp';
+      press.last = angleAt(e.clientX, e.clientY);
+      press.base = state.theta;
+      press.acc = 0;
+      press.start = state.theta;
+    } else if (hit.slider) {
+      const at = trackAt(e.clientX, e.clientY);
+      press.kind = 'slider';
+      press.last = at;
+      press.grab = at === null ? 0 : at - state.pos;
+      press.start = state.pos;
+    }
   }
   try { canvas.setPointerCapture(e.pointerId); } catch (err) { /* not needed for mouse */ }
 });
@@ -992,46 +1232,69 @@ canvas.addEventListener('pointermove', (e) => {
   if (!press) {
     if (e.pointerType === 'mouse') {
       const h = hitAt(e.clientX, e.clientY);
-      canvas.style.cursor = !h ? 'default' : h.lamp ? 'grab' : shade.has(h.tile) ? 'pointer' : 'not-allowed';
+      canvas.style.cursor = !h ? 'default' : (h.lamp || h.slider) ? 'grab' : shade.has(h.tile) ? 'pointer' : 'not-allowed';
     }
     return;
   }
   if (e.pointerId !== press.id) return;
   press.moved = Math.max(press.moved, Math.hypot(e.clientX - press.x, e.clientY - press.y));
-  if (!press.dragging && press.base !== undefined && press.moved > 5 && press.last !== null) {
+  if (!press.dragging && press.kind && press.moved > 5 && press.last !== null) {
     press.dragging = true;
     canvas.style.cursor = 'grabbing';
   }
   if (!press.dragging) return;
-  const a = angleAt(e.clientX, e.clientY);
-  if (a === null) return;
-  let d = a - press.last;
-  if (d > Math.PI) d -= TAU;
-  if (d < -Math.PI) d += TAU;
-  press.acc += d;
-  press.last = a;
-  const r = safeReach(state.theta, press.base + press.acc);
-  if (r.angle !== state.theta) {
-    if (Math.floor(r.angle / (STEP / 4)) !== Math.floor(state.theta / (STEP / 4))) Sound.tick();
-    setLampTheta(r.angle);
+  if (press.kind === 'lamp') {
+    const a = angleAt(e.clientX, e.clientY);
+    if (a === null) return;
+    let d = a - press.last;
+    if (d > Math.PI) d -= TAU;
+    if (d < -Math.PI) d += TAU;
+    press.acc += d;
+    press.last = a;
+    const r = lampReach(state.theta, press.base + press.acc);
+    if (r.at !== state.theta) {
+      if (Math.floor(r.at / (STEP / 4)) !== Math.floor(state.theta / (STEP / 4))) Sound.tick();
+      setLampTheta(r.at);
+    }
+    if (r.blocked && !press.warned) { press.warned = true; onBlocked(r.blocked, 'lamp'); }
+    if (!r.blocked) press.warned = false;
+  } else {
+    const at = trackAt(e.clientX, e.clientY);
+    if (at === null) return;
+    const want = Math.max(0, Math.min(L.slider.n - 1, at - press.grab));
+    const r = slideReach(state.pos, want);
+    if (r.at !== state.pos) {
+      if (Math.floor(r.at * 4) !== Math.floor(state.pos * 4)) Sound.tick();
+      setSliderPos(r.at);
+    }
+    if (r.blocked && !press.warned) { press.warned = true; onBlocked(r.blocked, 'slider'); }
+    if (!r.blocked) press.warned = false;
   }
-  if (r.blocked && !press.warned) { press.warned = true; onBlocked(); }
-  if (!r.blocked) press.warned = false;
 });
 function endPress(e) {
   if (!press || e.pointerId !== press.id) return;
   const p = press;
   press = null;
   canvas.style.cursor = 'default';
-  if (p.dragging) {
+  if (p.dragging && p.kind === 'lamp') {
     const near = Math.round(state.theta / STEP) * STEP;
     const other = state.theta > near ? near + STEP : near - STEP;
-    const target = [near, other, Math.round(p.startTheta / STEP) * STEP].find((c) => !safeReach(state.theta, c).blocked);
-    animateLamp(target === undefined ? p.startTheta : target);
+    const target = [near, other, Math.round(p.start / STEP) * STEP].find((c) => !lampReach(state.theta, c).blocked);
+    animateLamp(target === undefined ? p.start : target);
+    return;
+  }
+  if (p.dragging && p.kind === 'slider') {
+    const near = Math.round(state.pos);
+    const other = state.pos > near ? near + 1 : near - 1;
+    const target = [near, other, Math.round(p.start)]
+      .filter((c) => c >= 0 && c < L.slider.n)
+      .find((c) => !slideReach(state.pos, c).blocked);
+    animateSlider(target === undefined ? p.start : target);
     return;
   }
   if (e.type === 'pointercancel' || p.moved > 12 || !p.hit) return;
   if (p.hit.lamp) rotateBy(1);
+  else if (p.hit.slider) flashHint('按住小塔，沿着地上的凹槽拖动它');
   else if (p.hit.tile) walkTo(p.hit.tile);
 }
 canvas.addEventListener('pointerup', endPress);
@@ -1051,8 +1314,12 @@ soundBtn.addEventListener('click', () => {
   Sound.toggle(on);
   Sound.ensure();
 });
-document.getElementById('btn-reset').addEventListener('click', () => { Sound.ensure(); reset(); });
-document.getElementById('btn-again').addEventListener('click', () => { Sound.ensure(); reset(); });
+document.getElementById('btn-reset').addEventListener('click', () => { Sound.ensure(); resetLevel(); });
+document.getElementById('btn-again').addEventListener('click', () => { Sound.ensure(); resetLevel(); });
+nextBtn.addEventListener('click', () => {
+  Sound.ensure();
+  changeLevel(state.level === LEVELS.length - 1 ? 0 : state.level + 1);
+});
 
 // ---------- framing ----------
 const P = (x, y, z) => new THREE.Vector3(x, y, z);
@@ -1098,12 +1365,19 @@ function tickWorld(dt) {
     setLampTheta(a.from + (a.to - a.from) * k);
     if (a.t >= 1) { lampAnim = null; settleLamp(a.to); }
   }
+  if (slideAnim) {
+    const a = slideAnim;
+    a.t = Math.min(1, a.t + dt / a.dur);
+    const k = 1 - Math.pow(1 - a.t, 3);
+    setSliderPos(a.from + (a.to - a.from) * k);
+    if (a.t >= 1) { slideAnim = null; settleSlider(a.to); }
+  }
   updateWalker(dt);
   for (let i = flashes.length - 1; i >= 0; i--) {
     const f = flashes[i];
     f.t = Math.min(1, f.t + dt / 0.6);
     f.m.material.opacity = 0.55 * (1 - f.t);
-    if (f.t >= 1) { scene.remove(f.m); f.m.material.dispose(); flashes.splice(i, 1); }
+    if (f.t >= 1) { f.m.parent && f.m.parent.remove(f.m); f.m.material.dispose(); flashes.splice(i, 1); }
   }
   state.shake = Math.max(0, state.shake - dt * 2.5);
   state.shiver = Math.max(0, state.shiver - dt * 1.8);
@@ -1117,12 +1391,13 @@ function tickWorld(dt) {
 
 // ---------- boot ----------
 function start(data) {
-  reset(data);
+  const lv = data && Number.isInteger(data.level) && data.level >= 0 && data.level < LEVELS.length ? data.level : savedLevel();
+  enterLevel(lv, data && data.level === lv ? data : null);
   fit();
   requestAnimationFrame((t) => { clock.last = t; loop(t); });
 }
 const hot = window.claude && window.claude.hot;
-if (hot && typeof hot.snapshot === 'function') hot.snapshot(() => ({ k: state.k, tile: walker.tile }));
+if (hot && typeof hot.snapshot === 'function') hot.snapshot(() => ({ level: state.level, k: state.k, s: state.s, tile: walker.tile }));
 if (hot && typeof hot.ready === 'function') hot.ready(start);
 else start((hot && hot.data) || {});
 
