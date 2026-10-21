@@ -4,14 +4,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>影径</title>
-<meta name="description" content="一个关于光与影的等距小游戏：旅人只能走在影子里，转动光球、推动小塔，让影子替她铺出一条通往那扇门的路。">
+<meta name="description" content="一个关于光与影的等距小游戏：旅人只能走在影子里，转动光球、推动小塔、升降石柱，让影子替她铺出一条通往那扇门的路。">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Marcellus&family=ZCOOL+XiaoWei&display=swap">
 <style>
   :root {
     /* Layout: full-bleed sky with the floating court as the only subject; HUD pinned to the corners, end card as a centred veil.
-       Each chapter swaps the sky and ink tokens below from script. */
+       Each chapter swaps the sky, glass and ink tokens below from script. */
     --sky-1: #ffe2cb;
     --sky-2: #f6bdb3;
     --sky-3: #bcaadb;
@@ -19,6 +19,8 @@
     --sun: #fff4e2;
     --sun-halo: rgba(255, 236, 214, 0.55);
     --cloud: rgba(255, 247, 243, 0.62);
+    --stars: 0;
+    --star: rgba(255, 250, 235, 0.9);
     --ink: #463d70;
     --ink-soft: #776c9c;
     --warm: #c2553f;
@@ -48,6 +50,22 @@
   }
 
   .sky { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+  .stars {
+    position: absolute; inset: 0 0 30% 0;
+    opacity: var(--stars);
+    transition: opacity 0.6s ease;
+    background-image:
+      radial-gradient(1.4px 1.4px at 8% 14%, var(--star) 60%, transparent 62%),
+      radial-gradient(1px 1px at 23% 42%, var(--star) 60%, transparent 62%),
+      radial-gradient(1.8px 1.8px at 37% 9%, var(--star) 60%, transparent 62%),
+      radial-gradient(1px 1px at 51% 61%, var(--star) 60%, transparent 62%),
+      radial-gradient(1.3px 1.3px at 66% 27%, var(--star) 60%, transparent 62%),
+      radial-gradient(1px 1px at 79% 71%, var(--star) 60%, transparent 62%),
+      radial-gradient(1.6px 1.6px at 91% 38%, var(--star) 60%, transparent 62%),
+      radial-gradient(1px 1px at 14% 83%, var(--star) 60%, transparent 62%),
+      radial-gradient(1.2px 1.2px at 58% 88%, var(--star) 60%, transparent 62%);
+    background-size: 320px 260px;
+  }
   .sun {
     position: absolute; width: 46vmin; height: 46vmin; left: 58%; top: 7%;
     border-radius: 50%;
@@ -94,6 +112,23 @@
     text-transform: uppercase;
     color: var(--ink-soft);
   }
+  .chapters { display: flex; flex-wrap: wrap; gap: 2px; margin: 8px 0 0 -10px; }
+  .chapter-btn {
+    display: inline-flex; align-items: baseline; gap: 6px;
+    padding: 12px 12px 10px;
+    border: 0;
+    border-bottom: 1px solid transparent;
+    background: transparent;
+    color: var(--ink-soft);
+    font: 400 12px/1 var(--font-latin);
+    letter-spacing: 0.18em;
+    cursor: pointer;
+    transition: color 0.2s, border-color 0.2s;
+  }
+  .chapter-btn span { font: 400 13px/1 var(--font-display); letter-spacing: 0.1em; }
+  .chapter-btn:hover { color: var(--ink); }
+  .chapter-btn[aria-current="true"] { color: var(--ink); border-bottom-color: var(--ink); }
+  .chapter-btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
   .actions { display: flex; gap: 10px; }
   .icon-btn {
     width: 42px; height: 42px; padding: 0;
@@ -176,16 +211,18 @@
   @media (max-width: 480px) {
     .title h1 { letter-spacing: 0.22em; }
     .hint { font-size: 15px; letter-spacing: 0.14em; }
+    .chapter-btn span { display: none; }
   }
   @media (prefers-reduced-motion: reduce) {
     .cloud { animation: none; }
-    .hint, .card, #stage { transition: none; }
+    .hint, .card, #stage, .stars { transition: none; }
   }
 </style>
 </head>
 <body>
 
 <div class="sky" aria-hidden="true">
+  <div class="stars"></div>
   <div class="sun"></div>
   <div class="cloud c1"></div>
   <div class="cloud c2"></div>
@@ -199,6 +236,7 @@
   <div class="title">
     <h1>影径</h1>
     <p id="chapter">The Shadow Path · I</p>
+    <nav class="chapters" id="chapters" aria-label="选关"></nav>
   </div>
   <div class="actions">
     <button id="btn-sound" class="icon-btn" type="button" aria-pressed="true" aria-label="声音">
@@ -255,37 +293,47 @@ const TAU = Math.PI * 2;
 const STEP = Math.PI / 4;             // the orb rests every 45 degrees
 const SWEEP = Math.PI / 180;          // safety check resolution while the orb moves
 const SLIDE_STEP = 0.02;              // safety check resolution while the tower slides
+const LIFT_STEP = 0.02;               // safety check resolution while the lift moves
 const N = 7;
 const LAMP_Y = 2.1;
 const STEP_TIME = 0.42;
 
 // ---------- chapters ----------
-// Both layouts were found and checked by a solver: each needs every mechanism it offers.
+// Every layout was found and checked by a solver: each needs every mechanism it offers.
+const DAY_GLASS = { '--glass': 'rgba(255, 249, 245, 0.55)', '--glass-strong': 'rgba(255, 249, 245, 0.85)', '--stars': '0' };
 const THEMES = [
   {
-    css: { '--sky-1': '#ffe2cb', '--sky-2': '#f6bdb3', '--sky-3': '#bcaadb', '--mist-0': 'rgba(188, 170, 219, 0)', '--ink': '#463d70', '--ink-soft': '#776c9c', '--warm': '#c2553f', '--veil': 'rgba(255, 241, 234, 0.82)', '--line': 'rgba(70, 61, 112, 0.18)' },
+    css: Object.assign({ '--sky-1': '#ffe2cb', '--sky-2': '#f6bdb3', '--sky-3': '#bcaadb', '--mist-0': 'rgba(188, 170, 219, 0)', '--ink': '#463d70', '--ink-soft': '#776c9c', '--warm': '#c2553f', '--veil': 'rgba(255, 241, 234, 0.82)', '--line': 'rgba(70, 61, 112, 0.18)', '--sun': '#fff4e2', '--sun-halo': 'rgba(255, 236, 214, 0.55)', '--cloud': 'rgba(255, 247, 243, 0.62)' }, DAY_GLASS),
     floor: [0xf6ecf2, 0xefe3ec], plinth: 0xead8e4, plinthDeep: 0xdcc6da, stone: 0xf4e9f2, stoneWarm: 0xf0dee4,
     roofA: 0xe9907c, roofB: 0x5a5596, move: 0x9fd3c7, groove: 0xbfa9c6, window: 0x8a7fb3, frame: 0xd9c9e3, door: 0x3f3a6e,
-    hemi: [0xe6dbff, 0xd6c6e6], orb: 0xffc08a, warm: 0xffb4a2,
-    light: { hemi: 1.1, key: 0.75, orb: 3.4 },
+    hemi: [0xe6dbff, 0xd6c6e6], orb: 0xffc08a, warm: 0xffb4a2, keyColor: 0xffffff,
+    light: { hemi: 1.1, key: 0.75, warm: 0.35, orb: 3.4 },
   },
   {
-    css: { '--sky-1': '#fff1d6', '--sky-2': '#c4ead9', '--sky-3': '#8ab9cf', '--mist-0': 'rgba(138, 185, 207, 0)', '--ink': '#22485a', '--ink-soft': '#4f7584', '--warm': '#c0532f', '--veil': 'rgba(246, 252, 248, 0.84)', '--line': 'rgba(34, 72, 90, 0.18)' },
+    css: Object.assign({ '--sky-1': '#fff1d6', '--sky-2': '#c4ead9', '--sky-3': '#8ab9cf', '--mist-0': 'rgba(138, 185, 207, 0)', '--ink': '#22485a', '--ink-soft': '#4f7584', '--warm': '#c0532f', '--veil': 'rgba(246, 252, 248, 0.84)', '--line': 'rgba(34, 72, 90, 0.18)', '--sun': '#fff6e0', '--sun-halo': 'rgba(255, 244, 214, 0.5)', '--cloud': 'rgba(255, 255, 250, 0.6)' }, DAY_GLASS),
     floor: [0xf7efe2, 0xeee3d1], plinth: 0xe8dcc6, plinthDeep: 0xd5c7ab, stone: 0xf8f1e6, stoneWarm: 0xf0e3cf,
     roofA: 0xe8875c, roofB: 0x2f7480, move: 0xf2917a, groove: 0xb59f7c, window: 0x5f97a0, frame: 0xcfe3df, door: 0x24485a,
     // the sand floor is pale, so this chapter leans harder on the orb and a bluer sky light
-    hemi: [0xa8d6f0, 0xc7ddd6], orb: 0xffd29a, warm: 0xffc9a0,
-    light: { hemi: 0.9, key: 0.5, orb: 4.4 },
+    hemi: [0xa8d6f0, 0xc7ddd6], orb: 0xffd29a, warm: 0xffc9a0, keyColor: 0xffffff,
+    light: { hemi: 0.9, key: 0.5, warm: 0.35, orb: 4.4 },
+  },
+  {
+    // night: moonlit lavender stone, lit windows, and the orb as the only warm light
+    css: { '--sky-1': '#141c46', '--sky-2': '#2b3672', '--sky-3': '#5d5a9c', '--mist-0': 'rgba(93, 90, 156, 0)', '--ink': '#f3eadb', '--ink-soft': 'rgba(243, 234, 219, 0.66)', '--warm': '#ffb27a', '--veil': 'rgba(22, 28, 68, 0.82)', '--line': 'rgba(243, 234, 219, 0.22)', '--sun': '#f1ecdc', '--sun-halo': 'rgba(214, 214, 255, 0.16)', '--cloud': 'rgba(170, 176, 230, 0.14)', '--glass': 'rgba(24, 30, 70, 0.5)', '--glass-strong': 'rgba(46, 54, 112, 0.85)', '--stars': '1' },
+    floor: [0xcfcbe9, 0xc4bfe2], plinth: 0xa9a4d0, plinthDeep: 0x8c86bb, stone: 0xdcd8f2, stoneWarm: 0xcdc7ec,
+    roofA: 0xe2a35c, roofB: 0x2c2f6b, move: 0x7fd1c4, groove: 0x8780b6, window: 0xffd38a, frame: 0xb9b3dd, door: 0x1b1d45,
+    hemi: [0x6f7fd6, 0x3d3c74], orb: 0xffc27a, warm: 0x9fa8ff, keyColor: 0xc6d0ff,
+    light: { hemi: 0.95, key: 0.45, warm: 0.2, orb: 5.2 },
   },
 ];
 const LEVELS = [
   {
-    roman: 'I',
+    roman: 'I', name: '黄昏',
     theme: THEMES[0],
     post: { x: 3, z: 3 }, armR: 1.45, start: '6,6', startK: 5, gateX: 1,
     pillars: [{ x: 3, z: 0, h: 2.7, top: 'dome' }, { x: 1, z: 5, h: 2.7, top: 'pyramid' }, { x: 3, z: 4, h: 1.2 }],
     walls: [{ x: 2, z: 1, len: 3, axis: 'z', h: 1.0 }, { x: 4, z: 2, len: 3, axis: 'z', h: 1.0 }],
-    slider: null,
+    slider: null, lift: null,
     towers: { backLeft: 'dome', backRight: 'pyramid', leftFront: 'cone' },
     backWindows: [4.5, 5.4], leftWindows: [1.3, 2.7, 4.1],
     intro: '她只能走在影子里。拖动光球，影子会跟着转',
@@ -293,17 +341,31 @@ const LEVELS = [
     card: { eyebrow: 'Chapter I · Complete', title: '门开了', line: '她踩着影子穿过庭院，<br>走进了那扇门。' },
   },
   {
-    roman: 'II',
+    roman: 'II', name: '清晨',
     theme: THEMES[1],
     post: { x: 3, z: 3 }, armR: 1.45, start: '0,6', startK: 6, gateX: 2,
     pillars: [{ x: 0, z: 3, h: 2.7, top: 'dome' }, { x: 1, z: 4, h: 1.2 }],
     walls: [{ x: 1, z: 2, len: 3, axis: 'x', h: 1.0 }],
-    slider: { x: 4, z: 3, axis: 'z', n: 4, h: 1.8, start: 1 },
+    slider: { x: 4, z: 3, axis: 'z', n: 4, h: 1.8, start: 1 }, lift: null,
     towers: { backLeft: 'cone', backRight: 'dome', leftFront: 'pyramid' },
     backWindows: [3.6, 4.5, 5.4], leftWindows: [1.2, 4.8],
     intro: '右边那座塔可以推动。拖动它，影子会跟着移动',
     goal: '转光球、推小塔，替她铺出去门口的路',
     card: { eyebrow: 'Chapter II · Complete', title: '海风起', line: '光转了三次，塔推了三回，<br>她终于走到了门前。' },
+  },
+  {
+    roman: 'III', name: '星夜',
+    theme: THEMES[2],
+    post: { x: 3, z: 3 }, armR: 1.45, start: '0,6', startK: 7, gateX: 3,
+    pillars: [{ x: 4, z: 1, h: 1.2 }, { x: 2, z: 3, h: 1.2 }],
+    walls: [{ x: 2, z: 1, len: 2, axis: 'x', h: 1.0 }, { x: 2, z: 4, len: 2, axis: 'x', h: 1.0 }],
+    slider: null,
+    lift: { x: 1, z: 0, heights: [0, 1.2, 2.6], start: 2 },
+    towers: { backLeft: 'pyramid', backRight: 'cone', leftFront: 'dome' },
+    backWindows: [4.6, 5.5], leftWindows: [1.4, 2.9, 4.4],
+    intro: '后面那根柱子可以升降。上下拖动它，影子会变长变短',
+    goal: '柱子降到底，就成了一块能踩的石板',
+    card: { eyebrow: 'Chapter III · Complete', title: '夜归', line: '柱子沉进地面，成了她脚下的路，<br>她就这样走进了门。' },
   },
 ];
 
@@ -313,7 +375,7 @@ let L = null;                 // the current level
 let OCC = [];                 // static occluder boxes
 let BLOCKED = new Set();
 let TILES = new Map();
-let GATE = '', GATE_IN = '';
+let GATE = '', GATE_IN = '', LIFT_ID = '';
 
 function loadRules(level) {
   L = level;
@@ -333,6 +395,7 @@ function loadRules(level) {
   }
   GATE = key(level.gateX, -1);
   GATE_IN = key(level.gateX, 0);
+  LIFT_ID = level.lift ? key(level.lift.x, level.lift.z) : '';
   TILES.set(GATE, { id: GATE, x: level.gateX, z: -1, gate: true });
 }
 function sliderXZ(pos) {
@@ -344,10 +407,18 @@ function sliderCell(pos) {
   const [x, z] = sliderXZ(Math.round(pos));
   return key(x, z);
 }
-function occludersAt(pos) {
-  if (!L.slider) return OCC;
-  const [x, z] = sliderXZ(pos);
-  return OCC.concat([{ lo: [x - 0.35, 0, z - 0.35], hi: [x + 0.35, L.slider.h, z + 0.35] }]);
+// the occluders for a given slider position and lift height
+function occludersAt(pos, lh) {
+  const extra = [];
+  if (L.slider) {
+    const [x, z] = sliderXZ(pos);
+    extra.push({ lo: [x - 0.35, 0, z - 0.35], hi: [x + 0.35, L.slider.h, z + 0.35] });
+  }
+  if (L.lift && lh > 0.01) {
+    const { x, z } = L.lift;
+    extra.push({ lo: [x - 0.35, 0, z - 0.35], hi: [x + 0.35, lh, z + 0.35] });
+  }
+  return extra.length ? OCC.concat(extra) : OCC;
 }
 function lampAt(theta, out) {
   out[0] = L.post.x + L.armR * Math.cos(theta);
@@ -374,10 +445,10 @@ function segHitsBox(p, q, lo, hi) {
 // a tile is shadow when at least 3 of its 5 sample points cannot see the orb
 const SAMPLES = [[0, 0], [0.25, 0.25], [-0.25, 0.25], [0.25, -0.25], [-0.25, -0.25]];
 const _p = [0, 0.05, 0], _q = [0, 0, 0];
-function inShadow(tile, theta, pos) {
+function inShadow(tile, theta, pos, lh) {
   if (tile.gate) return true;
   lampAt(theta, _q);
-  const occ = occludersAt(pos);
+  const occ = occludersAt(pos, lh);
   let dark = 0;
   for (const s of SAMPLES) {
     _p[0] = tile.x + s[0];
@@ -388,9 +459,13 @@ function inShadow(tile, theta, pos) {
   }
   return dark >= 3;
 }
-function shadeAt(theta, pos) {
+function shadeAt(theta, pos, lh) {
   const out = new Set(), cell = sliderCell(pos);
-  TILES.forEach((t) => { if (t.id !== cell && inShadow(t, theta, pos)) out.add(t.id); });
+  TILES.forEach((t) => {
+    if (t.id === cell) return;
+    if (t.id === LIFT_ID && lh > 0.01) return;      // a raised lift is a pillar, not a floor
+    if (inShadow(t, theta, pos, lh)) out.add(t.id);
+  });
   return out;
 }
 function neighbours(id) {
@@ -437,7 +512,7 @@ renderer.shadowMap.type = THREE.PCFShadowMap;
 renderer.shadowMap.autoUpdate = false;
 const canvas = renderer.domElement;
 canvas.setAttribute('role', 'img');
-canvas.setAttribute('aria-label', '漂浮的庭院。旅人只能走在影子里，拖动或点击光球改变影子，第二关还可以拖动一座小塔，点击影子里的石板让她走过去。键盘按 R 转动光球。');
+canvas.setAttribute('aria-label', '漂浮的庭院。旅人只能走在影子里：拖动或点击光球改变影子，第二章可以拖动一座小塔，第三章可以上下拖动一根升降柱，点击影子里的石板让她走过去。键盘按 R 转动光球。');
 stage.appendChild(canvas);
 
 const ISO = new THREE.Vector3(1, 1, 1).normalize();
@@ -535,8 +610,8 @@ const turnToward = (cur, target, k) => {
 let world = null;
 let pickables = [];
 let M = null;                 // materials for the current theme
-let arm, orb, lampLight, sliderGroup, doorMat;
-let doorFrom = new THREE.Color(), doorTo = new THREE.Color(0xffe2a0);
+let arm, orb, lampLight, sliderGroup, liftGroup, liftBody, liftTop, doorMat;
+const doorFrom = new THREE.Color(), doorTo = new THREE.Color(0xffe2a0);
 
 function mesh(geo, mat, parent, opt) {
   opt = opt || {};
@@ -593,6 +668,17 @@ function decal(x, y, z, face, half, geo, mat) {
   world.add(m);
   return m;
 }
+// thin engraved bands on the two visible faces of a 0.7-wide moving block
+function bands(parent, ys) {
+  ys.forEach((y) => {
+    ['x', 'z'].forEach((f) => {
+      const band = new THREE.Mesh(BOX, M.groove);
+      band.scale.set(f === 'x' ? 0.004 : 0.5, 0.05, f === 'x' ? 0.5 : 0.004);
+      band.position.set(f === 'x' ? 0.352 : 0, y, f === 'x' ? 0 : 0.352);
+      parent.add(band);
+    });
+  });
+}
 
 function makeMaterials(t) {
   const flat = (c) => new THREE.MeshBasicMaterial({ color: c, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
@@ -602,6 +688,7 @@ function makeMaterials(t) {
     stone: lam(t.stone), stoneWarm: lam(t.stoneWarm),
     roofA: lam(t.roofA), roofB: lam(t.roofB), move: lam(t.move),
     gold: lam(0xf2c76b, { emissive: 0x4a3200 }),
+    socket: lam(t.groove),
     groove: new THREE.MeshBasicMaterial({ color: t.groove, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 }),
     window: flat(t.window), frame: flat(t.frame), door: flat(t.door),
     orb: new THREE.MeshBasicMaterial({ color: 0xfff3d1 }),
@@ -623,6 +710,17 @@ function teardown() {
   world = null;
 }
 
+const chaptersNav = document.getElementById('chapters');
+LEVELS.forEach((lv, i) => {
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.className = 'chapter-btn';
+  b.innerHTML = lv.roman + ' <span>' + lv.name + '</span>';
+  b.setAttribute('aria-label', '第 ' + (i + 1) + ' 章 ' + lv.name);
+  b.addEventListener('click', () => { Sound.ensure(); if (i !== state.level) changeLevel(i); });
+  chaptersNav.appendChild(b);
+});
+
 function buildLevel(level) {
   teardown();
   loadRules(level);
@@ -635,15 +733,24 @@ function buildLevel(level) {
   hemi.color.set(t.hemi[0]);
   hemi.groundColor.set(t.hemi[1]);
   hemi.intensity = t.light.hemi;
+  keyLight.color.set(t.keyColor);
   keyLight.intensity = t.light.key;
   warmLight.color.set(t.warm);
+  warmLight.intensity = t.light.warm;
   document.getElementById('chapter').textContent = 'The Shadow Path · ' + level.roman;
+  [...chaptersNav.children].forEach((b, i) => b.setAttribute('aria-current', String(LEVELS[i] === level)));
 
   // the floating court
   for (let x = 0; x < N; x++) {
     for (let z = 0; z < N; z++) {
+      const id = key(x, z);
+      if (id === LIFT_ID) {
+        // the lift sinks into a socket a little below the floor
+        box(x, -0.15, z, 0.97, 0.24, 0.97, M.socket, null, { pick: false });
+        continue;
+      }
       const slab = box(x, -0.12, z, 0.97, 0.24, 0.97, M.floor[(x + z) % 2]);
-      slab.userData.tile = key(x, z);
+      slab.userData.tile = id;
     }
   }
   box(2.5, -0.55, 2.5, 8, 0.62, 8, M.plinth, null, { cast: false });
@@ -712,7 +819,7 @@ function buildLevel(level) {
     const [ax, az] = sliderXZ(0), [bx, bz] = sliderXZ(s.n - 1);
     const len = s.n - 1 + 0.7;
     const groove = new THREE.Mesh(BOX, M.groove);
-    groove.scale.set(s.axis === 'x' ? len : 0.1, 0.01, s.axis === 'x' ? 0.1 : len);
+    groove.scale.set(s.axis === 'x' ? len : 0.12, 0.01, s.axis === 'x' ? 0.12 : len);
     groove.position.set((ax + bx) / 2, 0.006, (az + bz) / 2);
     world.add(groove);
     for (let i = 0; i < s.n; i++) {
@@ -724,22 +831,34 @@ function buildLevel(level) {
     }
     sliderGroup = new THREE.Group();
     world.add(sliderGroup);
-    const SLIDE = { pick: true };
-    const parts = [
-      box(0, (s.h - 0.24) / 2, 0, 0.7, s.h - 0.24, 0.7, M.move, sliderGroup, SLIDE),
-      box(0, s.h - 0.12, 0, 0.7, 0.24, 0.7, M.stone, sliderGroup, SLIDE),
-      box(0, 0.22, 0, 0.71, 0.06, 0.71, M.stoneWarm, sliderGroup, SLIDE),
-    ];
-    parts.forEach((m) => { m.userData.slider = true; });
-    // two engraved bands on each visible face say "this one moves"
-    [0.62, 0.98].forEach((y) => {
-      ['x', 'z'].forEach((f) => {
-        const band = new THREE.Mesh(BOX, M.groove);
-        band.scale.set(f === 'x' ? 0.004 : 0.5, 0.05, f === 'x' ? 0.5 : 0.004);
-        band.position.set(f === 'x' ? 0.352 : 0, y, f === 'x' ? 0 : 0.352);
-        sliderGroup.add(band);
-      });
-    });
+    [
+      box(0, (s.h - 0.24) / 2, 0, 0.7, s.h - 0.24, 0.7, M.move, sliderGroup),
+      box(0, s.h - 0.12, 0, 0.7, 0.24, 0.7, M.stone, sliderGroup),
+      box(0, 0.22, 0, 0.71, 0.06, 0.71, M.stoneWarm, sliderGroup),
+    ].forEach((m) => { m.userData.slider = true; });
+    bands(sliderGroup, [0.62, 0.98]);
+  }
+
+  // the lift: a 0.7-wide pillar that rises out of its socket. Its body is a unit box scaled to
+  // the current height; the cap and the inset square ride on top.
+  liftGroup = null;
+  if (level.lift) {
+    liftGroup = new THREE.Group();
+    liftGroup.position.set(level.lift.x, 0, level.lift.z);
+    world.add(liftGroup);
+    liftBody = box(0, 0, 0, 0.7, 1, 0.7, M.move, liftGroup);
+    liftTop = new THREE.Group();
+    liftGroup.add(liftTop);
+    const inset = new THREE.Mesh(BOX, M.groove);
+    inset.scale.set(0.36, 0.004, 0.36);
+    inset.position.y = 0.003;
+    liftTop.add(inset);
+    liftBody.userData.lift = true;
+    // the engraved ribs hang below the cap, so they rise with the pillar
+    const ribs = new THREE.Group();
+    liftGroup.add(ribs);
+    bands(ribs, [-0.3, -0.9, -1.5, -2.1]);
+    liftGroup.userData.ribs = ribs;
   }
 
   // the orb on its arm
@@ -872,6 +991,7 @@ const Sound = {
   },
   rest() { this.bell(880, 0, 0.06, 2.2); this.bell(1318.5, 0.12, 0.045, 2.4); },
   grind() { this.thud(); this.bell(440, 0.05, 0.04, 1.2); },
+  lift(up) { this.thud(); this.bell(up ? 659.25 : 329.63, 0.05, 0.05, 1.4); },
   blocked() { this.thud(); this.bell(207.65, 0.02, 0.05, 0.6); },
   nope() { this.bell(220, 0, 0.04, 0.35); },
   win() { [293.66, 369.99, 440, 587.33, 739.99, 880, 1174.66].forEach((f, i) => this.bell(f, i * 0.14, 0.09, 2.8)); },
@@ -912,12 +1032,12 @@ const Sound = {
 };
 
 // ---------- state ----------
-const state = { level: 0, theta: 0, k: 0, pos: 0, s: 0, won: false, moved: false, rotated: false, slid: false, winT: -1, shake: 0, shiver: 0 };
+const state = { level: 0, theta: 0, k: 0, pos: 0, s: 0, lh: 0, hi: 0, won: false, moved: false, rotated: false, slid: false, lifted: false, winT: -1, shake: 0, shiver: 0 };
 let shade = new Set();
 const walker = { tile: '', step: null, path: [], pending: null, exit: null };
-let lampAnim = null, slideAnim = null;
+let lampAnim = null, slideAnim = null, liftAnim = null;
 const mod8 = (k) => ((k % 8) + 8) % 8;
-const busy = () => state.won || !!walker.step || !!lampAnim || !!slideAnim;
+const busy = () => state.won || !!walker.step || !!lampAnim || !!slideAnim || !!liftAnim;
 
 function tileWorld(id, out) {
   const t = TILES.get(id);
@@ -934,6 +1054,18 @@ function setSliderPos(pos) {
   sliderGroup.position.set(x, 0, z);
   renderer.shadowMap.needsUpdate = true;
 }
+function setLiftHeight(h) {
+  state.lh = h;
+  const bottom = -0.27;
+  liftBody.scale.y = h - bottom;
+  liftBody.position.y = (h + bottom) / 2;
+  liftTop.position.y = h;
+  const ribs = liftGroup.userData.ribs;
+  ribs.position.y = h;
+  // a rib that has sunk below the floor is hidden
+  ribs.children.forEach((r) => { r.visible = h + r.position.y > 0.05; });
+  renderer.shadowMap.needsUpdate = true;
+}
 // how far the orb can travel toward `to` before its light would reach her
 function lampReach(from, to) {
   const tile = TILES.get(walker.tile);
@@ -941,7 +1073,7 @@ function lampReach(from, to) {
   let a = from;
   while (Math.abs(to - a) > 1e-9) {
     const next = Math.abs(to - a) <= SWEEP ? to : a + dir * SWEEP;
-    if (!inShadow(tile, next, state.pos)) return { at: a, blocked: 'light' };
+    if (!inShadow(tile, next, state.pos, state.lh)) return { at: a, blocked: 'light' };
     a = next;
   }
   return { at: a, blocked: false };
@@ -956,13 +1088,26 @@ function slideReach(from, to) {
   while (Math.abs(to - p) > 1e-9) {
     const next = Math.abs(to - p) <= SLIDE_STEP ? to : p + dir * SLIDE_STEP;
     if (her !== null && Math.abs(next - her) < 0.999) return { at: p, blocked: 'body' };
-    if (!inShadow(tile, state.theta, next)) return { at: p, blocked: 'light' };
+    if (!inShadow(tile, state.theta, next, state.lh)) return { at: p, blocked: 'light' };
     p = next;
   }
   return { at: p, blocked: false };
 }
+// how far the lift can move toward height `to`: it cannot rise under her, and must keep her in shadow
+function liftReach(from, to) {
+  const tile = TILES.get(walker.tile);
+  const dir = Math.sign(to - from);
+  if (dir > 0 && walker.tile === LIFT_ID) return { at: from, blocked: 'standing' };
+  let h = from;
+  while (Math.abs(to - h) > 1e-9) {
+    const next = Math.abs(to - h) <= LIFT_STEP ? to : h + dir * LIFT_STEP;
+    if (!inShadow(tile, state.theta, state.pos, next)) return { at: h, blocked: 'light' };
+    h = next;
+  }
+  return { at: h, blocked: false };
+}
 function settle() {
-  shade = shadeAt(state.theta, state.pos);
+  shade = shadeAt(state.theta, state.pos, state.lh);
   updateHint();
 }
 function settleLamp(theta) {
@@ -979,25 +1124,42 @@ function settleSlider(pos) {
   if (state.s !== before) { state.slid = true; Sound.grind(); }
   settle();
 }
+function settleLift(index) {
+  const before = state.hi;
+  state.hi = index;
+  setLiftHeight(L.lift.heights[index]);
+  if (index !== before) { state.lifted = true; Sound.lift(index > before); }
+  settle();
+}
 function animateLamp(to) {
   lampAnim = { from: state.theta, to, t: 0, dur: 0.32 + 0.3 * Math.min(2, Math.abs(to - state.theta) / STEP) };
 }
 function animateSlider(to) {
   slideAnim = { from: state.pos, to, t: 0, dur: 0.25 + 0.25 * Math.min(2, Math.abs(to - state.pos)) };
 }
+function animateLift(index) {
+  const to = L.lift.heights[index];
+  liftAnim = { from: state.lh, to, index, t: 0, dur: 0.3 + 0.2 * Math.min(2, Math.abs(to - state.lh)) };
+}
 function rotateBy(n) {
   if (busy()) return;
   const target = (Math.round(state.theta / STEP) + n) * STEP;
   const r = lampReach(state.theta, target);
-  if (r.blocked) { onBlocked('light'); return; }
+  if (r.blocked) { onBlocked('light', 'lamp'); return; }
   animateLamp(target);
 }
+const BLOCK_TEXT = {
+  lamp: '再转下去，光就会照到她',
+  slider: '再推下去，光就会照到她',
+  lift: '再动这根柱子，光就会照到她',
+  body: '她挡在路上，塔推不过去',
+  standing: '她正站在柱子上，没法把它升起来',
+};
 function onBlocked(why, what) {
   state.shake = 1;
   state.shiver = 1;
   Sound.blocked();
-  if (why === 'body') flashHint('她挡在路上，塔推不过去', true);
-  else flashHint(what === 'slider' ? '再推下去，光就会照到她' : '再转下去，光就会照到她', true);
+  flashHint(BLOCK_TEXT[why === 'light' ? what : why], true);
 }
 
 // ---------- hints ----------
@@ -1022,18 +1184,21 @@ function flashHint(text, warm) {
 function updateHint() {
   if (flashing) return;
   if (state.won) return showHint('');
-  if (!state.rotated && !state.moved && !state.slid) return showHint(L.intro);
+  const touched = state.rotated || state.slid || state.lifted;
+  if (!touched && !state.moved) return showHint(L.intro);
   if (findPath(walker.tile, GATE_IN, shade)) return showHint('门就在前面');
-  if ((state.rotated || state.slid) && !state.moved) return showHint('点影子里的石板，带她过去');
+  if (touched && !state.moved) return showHint('点影子里的石板，带她过去');
   if (L.slider && !state.slid) return showHint('别忘了那座可以推动的塔');
+  if (L.lift && !state.lifted) return showHint('别忘了那根可以升降的柱子');
   return showHint(L.goal);
 }
 
 // ---------- walking ----------
 function walkTo(id) {
-  if (state.won || lampAnim || slideAnim || (press && press.dragging)) return;
+  if (state.won || lampAnim || slideAnim || liftAnim || (press && press.dragging)) return;
   if (!TILES.has(id)) return;
   if (!shade.has(id)) {
+    if (id === LIFT_ID && state.lh > 0.01) { flashHint('柱子降到底，才能踩上去'); return; }
     flashTile(id);
     Sound.nope();
     flashHint('那里有光，她过不去', true);
@@ -1044,7 +1209,7 @@ function walkTo(id) {
   const path = findPath(walker.tile, id, shade);
   if (!path) {
     Sound.nope();
-    flashHint(L.slider ? '影子没有连到那里，转一转光球或推一推塔' : '影子没有连到那里，转一转光球', true);
+    flashHint('影子没有连到那里，' + (L.slider ? '转一转光球或推一推塔' : L.lift ? '转一转光球或动一动柱子' : '转一转光球'), true);
     return;
   }
   walker.path = path.slice(1);
@@ -1114,7 +1279,7 @@ function win() {
   document.getElementById('card-eyebrow').textContent = L.card.eyebrow;
   document.getElementById('card-title').textContent = L.card.title;
   document.getElementById('card-line').innerHTML = L.card.line;
-  nextBtn.textContent = last ? '从第一关开始' : '下一关';
+  nextBtn.textContent = last ? '从第一章开始' : '下一关';
   setTimeout(() => {
     if (!state.won) return;
     card.hidden = false;
@@ -1125,11 +1290,11 @@ function win() {
 function resetLevel(data) {
   state.won = false;
   state.winT = -1;
-  state.moved = state.rotated = state.slid = false;
+  state.moved = state.rotated = state.slid = state.lifted = false;
   state.shake = state.shiver = 0;
   card.classList.remove('show');
   card.hidden = true;
-  lampAnim = slideAnim = null;
+  lampAnim = slideAnim = liftAnim = null;
   walker.step = null;
   walker.path = [];
   walker.pending = null;
@@ -1138,21 +1303,26 @@ function resetLevel(data) {
   robeMat.opacity = scarfMat.opacity = 1;
   doorMat.color.copy(doorFrom);
   body.rotation.z = 0;
-  let k = L.startK, s = L.slider ? L.slider.start : 0, tile = L.start;
+  let k = L.startK, s = L.slider ? L.slider.start : 0, hi = L.lift ? L.lift.start : 0, tile = L.start;
   if (data && Number.isInteger(data.k) && TILES.has(data.tile) && data.tile !== GATE) {
     const ds = L.slider && Number.isInteger(data.s) ? data.s : s;
-    if (shadeAt(data.k * STEP, ds).has(data.tile)) { k = data.k; s = ds; tile = data.tile; }
+    const dh = L.lift && Number.isInteger(data.hi) ? data.hi : hi;
+    const lh = L.lift ? L.lift.heights[dh] : 0;
+    if (shadeAt(data.k * STEP, ds, lh).has(data.tile)) { k = data.k; s = ds; hi = dh; tile = data.tile; }
   }
   walker.tile = tile;
   state.k = k;
   state.s = s;
+  state.hi = hi;
   setLampTheta(k * STEP);
   state.pos = s;
   if (L.slider) setSliderPos(s);
-  shade = shadeAt(state.theta, state.pos);
+  state.lh = L.lift ? L.lift.heights[hi] : 0;
+  if (L.lift) setLiftHeight(state.lh);
+  shade = shadeAt(state.theta, state.pos, state.lh);
   state.rotated = state.moved = tile !== L.start;
   tileWorld(tile, char.position);
-  facing = char.rotation.y = tile === '0,6' ? -Math.PI / 2 : -Math.PI * 3 / 4;
+  facing = char.rotation.y = -Math.PI * 3 / 4;
   flashing = false;
   updateHint();
 }
@@ -1176,6 +1346,8 @@ const raycaster = new THREE.Raycaster();
 const ndc = new THREE.Vector2();
 const lampPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -LAMP_Y);
 const slidePlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -0.9);
+const liftPlane = new THREE.Plane();
+const FACE_CAMERA = new THREE.Vector3(1, 0, 1).normalize();
 const tmp = new THREE.Vector3();
 function aim(cx, cy) {
   const r = canvas.getBoundingClientRect();
@@ -1189,6 +1361,7 @@ function hitAt(cx, cy) {
     const ud = h.object.userData;
     if (ud.lamp) return { lamp: true };
     if (ud.slider) return { slider: true };
+    if (ud.lift) return { lift: true, tile: LIFT_ID };
     if (ud.tile) return { tile: ud.tile };
     return null;
   }
@@ -1203,6 +1376,13 @@ function trackAt(cx, cy) {
   aim(cx, cy);
   if (!raycaster.ray.intersectPlane(slidePlane, tmp)) return null;
   return L.slider.axis === 'x' ? tmp.x - L.slider.x : tmp.z - L.slider.z;
+}
+// height under the pointer, measured on an upright plane through the lift that faces the camera
+function heightAt(cx, cy) {
+  aim(cx, cy);
+  liftPlane.setFromNormalAndCoplanarPoint(FACE_CAMERA, tmp.set(L.lift.x, 0, L.lift.z));
+  if (!raycaster.ray.intersectPlane(liftPlane, tmp)) return null;
+  return tmp.y;
 }
 
 let press = null;
@@ -1224,6 +1404,12 @@ canvas.addEventListener('pointerdown', (e) => {
       press.last = at;
       press.grab = at === null ? 0 : at - state.pos;
       press.start = state.pos;
+    } else if (hit.lift) {
+      const at = heightAt(e.clientX, e.clientY);
+      press.kind = 'lift';
+      press.last = at;
+      press.grab = at === null ? 0 : at - state.lh;
+      press.start = state.hi;
     }
   }
   try { canvas.setPointerCapture(e.pointerId); } catch (err) { /* not needed for mouse */ }
@@ -1232,7 +1418,10 @@ canvas.addEventListener('pointermove', (e) => {
   if (!press) {
     if (e.pointerType === 'mouse') {
       const h = hitAt(e.clientX, e.clientY);
-      canvas.style.cursor = !h ? 'default' : (h.lamp || h.slider) ? 'grab' : shade.has(h.tile) ? 'pointer' : 'not-allowed';
+      canvas.style.cursor = !h ? 'default'
+        : h.lift ? (state.lh < 0.01 ? 'pointer' : 'ns-resize')
+        : (h.lamp || h.slider) ? 'grab'
+        : shade.has(h.tile) ? 'pointer' : 'not-allowed';
     }
     return;
   }
@@ -1240,9 +1429,10 @@ canvas.addEventListener('pointermove', (e) => {
   press.moved = Math.max(press.moved, Math.hypot(e.clientX - press.x, e.clientY - press.y));
   if (!press.dragging && press.kind && press.moved > 5 && press.last !== null) {
     press.dragging = true;
-    canvas.style.cursor = 'grabbing';
+    canvas.style.cursor = press.kind === 'lift' ? 'ns-resize' : 'grabbing';
   }
   if (!press.dragging) return;
+  let r;
   if (press.kind === 'lamp') {
     const a = angleAt(e.clientX, e.clientY);
     if (a === null) return;
@@ -1251,25 +1441,31 @@ canvas.addEventListener('pointermove', (e) => {
     if (d < -Math.PI) d += TAU;
     press.acc += d;
     press.last = a;
-    const r = lampReach(state.theta, press.base + press.acc);
+    r = lampReach(state.theta, press.base + press.acc);
     if (r.at !== state.theta) {
       if (Math.floor(r.at / (STEP / 4)) !== Math.floor(state.theta / (STEP / 4))) Sound.tick();
       setLampTheta(r.at);
     }
-    if (r.blocked && !press.warned) { press.warned = true; onBlocked(r.blocked, 'lamp'); }
-    if (!r.blocked) press.warned = false;
-  } else {
+  } else if (press.kind === 'slider') {
     const at = trackAt(e.clientX, e.clientY);
     if (at === null) return;
-    const want = Math.max(0, Math.min(L.slider.n - 1, at - press.grab));
-    const r = slideReach(state.pos, want);
+    r = slideReach(state.pos, Math.max(0, Math.min(L.slider.n - 1, at - press.grab)));
     if (r.at !== state.pos) {
       if (Math.floor(r.at * 4) !== Math.floor(state.pos * 4)) Sound.tick();
       setSliderPos(r.at);
     }
-    if (r.blocked && !press.warned) { press.warned = true; onBlocked(r.blocked, 'slider'); }
-    if (!r.blocked) press.warned = false;
+  } else {
+    const at = heightAt(e.clientX, e.clientY);
+    if (at === null) return;
+    const hs = L.lift.heights;
+    r = liftReach(state.lh, Math.max(hs[0], Math.min(hs[hs.length - 1], at - press.grab)));
+    if (r.at !== state.lh) {
+      if (Math.floor(r.at * 5) !== Math.floor(state.lh * 5)) Sound.tick();
+      setLiftHeight(r.at);
+    }
   }
+  if (r.blocked && !press.warned) { press.warned = true; onBlocked(r.blocked, press.kind); }
+  if (!r.blocked) press.warned = false;
 });
 function endPress(e) {
   if (!press || e.pointerId !== press.id) return;
@@ -1292,9 +1488,17 @@ function endPress(e) {
     animateSlider(target === undefined ? p.start : target);
     return;
   }
+  if (p.dragging && p.kind === 'lift') {
+    const hs = L.lift.heights;
+    const order = hs.map((h, i) => i).sort((a, b) => Math.abs(hs[a] - state.lh) - Math.abs(hs[b] - state.lh));
+    const target = order.concat([p.start]).find((i) => !liftReach(state.lh, hs[i]).blocked);
+    animateLift(target === undefined ? p.start : target);
+    return;
+  }
   if (e.type === 'pointercancel' || p.moved > 12 || !p.hit) return;
   if (p.hit.lamp) rotateBy(1);
   else if (p.hit.slider) flashHint('按住小塔，沿着地上的凹槽拖动它');
+  else if (p.hit.lift && state.lh > 0.01) flashHint('按住柱子上下拖动，它会升起或沉下');
   else if (p.hit.tile) walkTo(p.hit.tile);
 }
 canvas.addEventListener('pointerup', endPress);
@@ -1335,7 +1539,7 @@ function fit() {
     minX = Math.min(minX, x); maxX = Math.max(maxX, x);
     minY = Math.min(minY, y); maxY = Math.max(maxY, y);
   });
-  const padTop = Math.min(110, H * 0.13), padBottom = Math.min(90, H * 0.11), padSide = W > H ? Math.max(24, W * 0.05) : 10;
+  const padTop = Math.min(140, H * 0.16), padBottom = Math.min(90, H * 0.11), padSide = W > H ? Math.max(24, W * 0.05) : 10;
   const availW = W - padSide * 2, availH = H - padTop - padBottom;
   const ppu = Math.min(availW / (maxX - minX), availH / (maxY - minY));
   const cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
@@ -1358,19 +1562,24 @@ function loop(now) {
 }
 function tickWorld(dt) {
   clock.t += dt;
+  const ease = (t) => 1 - Math.pow(1 - t, 3);
   if (lampAnim) {
     const a = lampAnim;
     a.t = Math.min(1, a.t + dt / a.dur);
-    const k = 1 - Math.pow(1 - a.t, 3);
-    setLampTheta(a.from + (a.to - a.from) * k);
+    setLampTheta(a.from + (a.to - a.from) * ease(a.t));
     if (a.t >= 1) { lampAnim = null; settleLamp(a.to); }
   }
   if (slideAnim) {
     const a = slideAnim;
     a.t = Math.min(1, a.t + dt / a.dur);
-    const k = 1 - Math.pow(1 - a.t, 3);
-    setSliderPos(a.from + (a.to - a.from) * k);
+    setSliderPos(a.from + (a.to - a.from) * ease(a.t));
     if (a.t >= 1) { slideAnim = null; settleSlider(a.to); }
+  }
+  if (liftAnim) {
+    const a = liftAnim;
+    a.t = Math.min(1, a.t + dt / a.dur);
+    setLiftHeight(a.from + (a.to - a.from) * ease(a.t));
+    if (a.t >= 1) { liftAnim = null; settleLift(a.index); }
   }
   updateWalker(dt);
   for (let i = flashes.length - 1; i >= 0; i--) {
@@ -1397,7 +1606,7 @@ function start(data) {
   requestAnimationFrame((t) => { clock.last = t; loop(t); });
 }
 const hot = window.claude && window.claude.hot;
-if (hot && typeof hot.snapshot === 'function') hot.snapshot(() => ({ level: state.level, k: state.k, s: state.s, tile: walker.tile }));
+if (hot && typeof hot.snapshot === 'function') hot.snapshot(() => ({ level: state.level, k: state.k, s: state.s, hi: state.hi, tile: walker.tile }));
 if (hot && typeof hot.ready === 'function') hot.ready(start);
 else start((hot && hot.data) || {});
 
