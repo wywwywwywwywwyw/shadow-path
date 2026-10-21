@@ -4,30 +4,27 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>影径</title>
-<meta name="description" content="一个关于灯与影的等距小游戏：皮影小人只能走在影子里，转动灯笼，让影子替她铺出一条通往月门的路。">
+<meta name="description" content="一个关于光与影的等距小游戏：墨水小精灵只能待在影子里，转动光球，让雕塑的影子替它铺出一条回家的路。">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Italiana&family=Ma+Shan+Zheng&family=ZCOOL+XiaoWei&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jost:wght@300;400&family=Noto+Sans+SC:wght@200;300;400&display=swap">
 <style>
   :root {
-    /* Layout: full-bleed night sky with the courtyard as the only subject; HUD in the corners, end card as a centred veil */
-    --night-1: #0c112e;
-    --night-2: #1a1c44;
-    --night-3: #2e2652;
-    --mist-0: rgba(46, 38, 82, 0);
-    --moon: #f4ecd6;
-    --moon-halo: rgba(244, 236, 214, 0.14);
-    --ink: #efe6d2;
-    --ink-soft: rgba(239, 230, 210, 0.62);
-    --ember: #f2a65a;
-    --glass: rgba(22, 24, 58, 0.5);
-    --glass-strong: rgba(40, 42, 88, 0.8);
-    --line: rgba(239, 230, 210, 0.22);
-    --veil: rgba(12, 17, 46, 0.78);
-    --font-brush: "Ma Shan Zheng", "STKaiti", "KaiTi", serif;
-    --font-display: "ZCOOL XiaoWei", "Songti SC", "STSong", serif;
-    --font-latin: "Italiana", "Didot", "Bodoni 72", Georgia, serif;
-    color-scheme: dark;
+    /* Layout: a pale gallery void with the sculpture court as the only object; HUD in the corners, end card as a centred veil */
+    --bg-top: #f4f0ea;
+    --bg-bottom: #e1d9cf;
+    --mist-0: rgba(225, 217, 207, 0);
+    --halo: rgba(255, 238, 214, 0.75);
+    --ink: #24263a;
+    --ink-soft: rgba(36, 38, 58, 0.55);
+    --warm: #b8662f;
+    --glass: rgba(255, 255, 255, 0.55);
+    --glass-strong: rgba(255, 255, 255, 0.9);
+    --line: rgba(36, 38, 58, 0.16);
+    --veil: rgba(246, 243, 238, 0.88);
+    --font-cn: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", sans-serif;
+    --font-latin: "Jost", "Futura", "Century Gothic", sans-serif;
+    color-scheme: light;
   }
 
   [hidden] { display: none !important; }
@@ -35,10 +32,11 @@
   body {
     margin: 0;
     overflow: hidden;
-    background: var(--night-2);
-    background-image: linear-gradient(180deg, var(--night-1) 0%, var(--night-2) 55%, var(--night-3) 100%);
+    background: var(--bg-top);
+    background-image: linear-gradient(180deg, var(--bg-top) 0%, var(--bg-bottom) 100%);
     color: var(--ink);
-    font-family: var(--font-display);
+    font-family: var(--font-cn);
+    font-weight: 300;
     padding-left: max(16px, env(safe-area-inset-left, 0px));
     padding-right: max(16px, env(safe-area-inset-right, 0px));
     -webkit-user-select: none;
@@ -46,42 +44,41 @@
     -webkit-tap-highlight-color: transparent;
   }
 
-  #stars { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
-  .moon {
+  .halo {
     position: fixed; z-index: 0; pointer-events: none;
-    width: 20vmin; height: 20vmin; right: 11%; top: 10%;
+    left: 50%; top: 46%; width: 120vmin; height: 120vmin;
+    transform: translate(-50%, -50%);
     border-radius: 50%;
-    background: radial-gradient(circle at 44% 42%, var(--moon) 0 57%, transparent 60%);
-    box-shadow: 0 0 80px 24px var(--moon-halo);
+    background: radial-gradient(circle, var(--halo) 0%, transparent 62%);
   }
 
   #stage { position: fixed; inset: 0; z-index: 1; }
   #stage canvas { display: block; touch-action: none; outline: none; }
 
   .mist {
-    position: fixed; left: 0; right: 0; bottom: 0; height: 30vh; z-index: 2; pointer-events: none;
-    background: linear-gradient(to bottom, var(--mist-0) 0%, var(--night-3) 88%);
+    position: fixed; left: 0; right: 0; bottom: 0; height: 28vh; z-index: 2; pointer-events: none;
+    background: linear-gradient(to bottom, var(--mist-0) 0%, var(--bg-bottom) 90%);
   }
 
   .hud {
     position: fixed; top: 0; left: 0; right: 0; z-index: 3;
     display: flex; justify-content: space-between; align-items: flex-start; gap: 16px;
-    padding-top: calc(env(safe-area-inset-top, 0px) + 16px);
-    padding-left: max(20px, env(safe-area-inset-left, 0px));
-    padding-right: max(20px, env(safe-area-inset-right, 0px));
+    padding-top: calc(env(safe-area-inset-top, 0px) + 20px);
+    padding-left: max(22px, env(safe-area-inset-left, 0px));
+    padding-right: max(22px, env(safe-area-inset-right, 0px));
     pointer-events: none;
   }
   .hud > * { pointer-events: auto; }
   .title h1 {
     margin: 0;
-    font: 400 clamp(34px, 4.2vw, 44px)/1 var(--font-brush);
-    letter-spacing: 0.12em;
+    font: 200 clamp(28px, 3.4vw, 36px)/1 var(--font-cn);
+    letter-spacing: 0.5em;
     color: var(--ink);
   }
   .title p {
-    margin: 8px 0 0;
-    font: 400 12px/1.4 var(--font-latin);
-    letter-spacing: 0.34em;
+    margin: 10px 0 0;
+    font: 300 11px/1.4 var(--font-latin);
+    letter-spacing: 0.42em;
     text-transform: uppercase;
     color: var(--ink-soft);
   }
@@ -99,7 +96,7 @@
     transition: background-color 0.2s, transform 0.2s;
   }
   .icon-btn:hover { background: var(--glass-strong); transform: translateY(-1px); }
-  .icon-btn:focus-visible, .text-btn:focus-visible { outline: 2px solid var(--ember); outline-offset: 3px; }
+  .icon-btn:focus-visible, .text-btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
   .icon-btn svg { width: 18px; height: 18px; }
   .icon-btn .off { display: none; }
   .icon-btn[aria-pressed="false"] .on { display: none; }
@@ -107,21 +104,20 @@
 
   .hint {
     position: fixed; left: 0; right: 0; z-index: 3; margin: 0;
-    bottom: calc(env(safe-area-inset-bottom, 0px) + 26px);
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 28px);
     padding-left: max(16px, env(safe-area-inset-left, 0px));
     padding-right: max(16px, env(safe-area-inset-right, 0px));
     text-align: center;
-    font: 400 16px/1.5 var(--font-display);
-    letter-spacing: 0.2em;
+    font: 300 15px/1.6 var(--font-cn);
+    letter-spacing: 0.16em;
     color: var(--ink);
-    text-shadow: 0 1px 12px rgba(12, 17, 46, 0.9);
     opacity: 0;
     transform: translateY(6px);
     transition: opacity 0.45s ease, transform 0.45s ease;
     pointer-events: none;
   }
-  .hint.show { opacity: 0.94; transform: none; }
-  .hint.warm { color: var(--ember); }
+  .hint.show { opacity: 0.9; transform: none; }
+  .hint.warm { color: var(--warm); }
 
   .card {
     position: fixed; inset: 0; z-index: 4;
@@ -133,38 +129,39 @@
     transition: opacity 1s ease;
   }
   .card.show { opacity: 1; }
-  .card-inner { display: grid; justify-items: center; gap: 14px; text-align: center; max-width: 30ch; }
+  .card-inner { display: grid; justify-items: center; gap: 16px; text-align: center; max-width: 30ch; }
   .card .eyebrow {
     margin: 0;
-    font: 400 12px/1.4 var(--font-latin);
-    letter-spacing: 0.4em;
+    font: 300 11px/1.4 var(--font-latin);
+    letter-spacing: 0.42em;
     text-transform: uppercase;
     color: var(--ink-soft);
   }
   .card h2 {
     margin: 0;
-    font: 400 clamp(60px, 11vw, 84px)/1 var(--font-brush);
-    letter-spacing: 0.16em;
-    padding-left: 0.16em;
-    color: var(--moon);
+    font: 200 clamp(52px, 10vw, 76px)/1 var(--font-cn);
+    letter-spacing: 0.4em;
+    padding-left: 0.4em;
+    color: var(--ink);
   }
-  .card .line { margin: 0; font-size: 16px; line-height: 1.8; letter-spacing: 0.12em; color: var(--ink); }
+  .card .line { margin: 0; font-size: 15px; line-height: 1.9; letter-spacing: 0.1em; color: var(--ink); }
   .text-btn {
     margin-top: 10px;
-    font: 400 15px/1 var(--font-display);
+    font: 300 14px/1 var(--font-cn);
     letter-spacing: 0.3em;
     padding: 13px 22px 13px 26px;
     border-radius: 999px;
-    border: 1px solid var(--ink-soft);
+    border: 1px solid var(--ink);
     background: transparent;
     color: var(--ink);
     cursor: pointer;
     transition: background-color 0.2s, color 0.2s;
   }
-  .text-btn:hover { background: var(--ink); color: var(--night-1); }
+  .text-btn:hover { background: var(--ink); color: var(--bg-top); }
 
   @media (max-width: 480px) {
-    .hint { font-size: 15px; letter-spacing: 0.12em; }
+    .title h1 { letter-spacing: 0.4em; }
+    .hint { font-size: 14px; letter-spacing: 0.1em; }
   }
   @media (prefers-reduced-motion: reduce) {
     .hint, .card { transition: none; }
@@ -173,8 +170,7 @@
 </head>
 <body>
 
-<canvas id="stars" aria-hidden="true"></canvas>
-<div class="moon" aria-hidden="true"></div>
+<div class="halo" aria-hidden="true"></div>
 <div id="stage"></div>
 <div class="mist" aria-hidden="true"></div>
 
@@ -185,11 +181,11 @@
   </div>
   <div class="actions">
     <button id="btn-sound" class="icon-btn" type="button" aria-pressed="true" aria-label="声音">
-      <svg class="on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4 4 0 0 1 0 6"/><path d="M18 6.5a7.5 7.5 0 0 1 0 11"/></svg>
-      <svg class="off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M16 9.5l5 5M21 9.5l-5 5"/></svg>
+      <svg class="on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M15.5 9a4 4 0 0 1 0 6"/><path d="M18 6.5a7.5 7.5 0 0 1 0 11"/></svg>
+      <svg class="off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9.5h3.5L12 5.5v13l-4.5-4H4z"/><path d="M16 9.5l5 5M21 9.5l-5 5"/></svg>
     </button>
     <button id="btn-reset" class="icon-btn" type="button" aria-label="重新开始">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3"/><path d="M4.5 4.5v4h4"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 12a7.5 7.5 0 1 0 2.2-5.3"/><path d="M4.5 4.5v4h4"/></svg>
     </button>
   </div>
 </header>
@@ -199,8 +195,8 @@
 <section id="card" class="card" hidden aria-live="polite">
   <div class="card-inner">
     <p class="eyebrow">Chapter I · Complete</p>
-    <h2>月下</h2>
-    <p class="line">她跟着影子穿过庭院，<br>走进了月光里。</p>
+    <h2>归处</h2>
+    <p class="line">小墨跟着影子穿过雕塑园，<br>回到了属于它的暗处。</p>
     <button id="btn-again" class="text-btn" type="button">再走一次</button>
   </div>
 </section>
@@ -215,13 +211,11 @@
     hintEl.textContent = msg;
     hintEl.classList.add('show');
   }
-  drawStars();
-  window.addEventListener('resize', drawStars);
   if (!window.THREE) return fail('3D 引擎没能加载，请检查网络后刷新页面');
 
   // ---------- level ----------
   const TAU = Math.PI * 2;
-  const STEP = Math.PI / 4;             // the lantern rests every 45 degrees
+  const STEP = Math.PI / 4;             // the orb rests every 45 degrees
   const SWEEP = Math.PI / 180;          // safety check resolution while it moves
   const N = 7;
   const POST = { x: 3, z: 3 };
@@ -234,13 +228,13 @@
   const STEP_TIME = 0.4;
 
   // Every occluder is an axis-aligned box. The same boxes cast the rendered
-  // shadow and decide which tiles she may stand on, so what you see is the rule.
+  // shadow and decide which tiles it may stand on, so what you see is the rule.
   const PILLARS = [
     { x: 3, z: 0, h: 2.7 },
     { x: 1, z: 5, h: 2.7 },
     { x: 3, z: 4, h: 1.2 },
   ];
-  const WALLS = [                       // low screen walls running along z
+  const WALLS = [                       // low slabs running along z
     { x: 2, z0: 1, len: 3, h: 1.0 },
     { x: 4, z0: 2, len: 3, h: 1.0 },
   ];
@@ -282,7 +276,7 @@
     }
     return true;
   }
-  // a tile is shadow when at least 3 of its 5 sample points cannot see the lantern
+  // a tile is shadow when at least 3 of its 5 sample points cannot see the orb
   const SAMPLES = [[0, 0], [0.25, 0.25], [-0.25, 0.25], [0.25, -0.25], [-0.25, -0.25]];
   const _p = [0, 0.05, 0], _q = [0, 0, 0];
   function inShadow(tile, theta) {
@@ -337,7 +331,7 @@
   try {
     renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   } catch (err) {
-    return fail('这个浏览器没有开启 WebGL，无法显示庭院');
+    return fail('这个浏览器没有开启 WebGL，无法显示雕塑园');
   }
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   renderer.setClearColor(0x000000, 0);
@@ -346,7 +340,7 @@
   renderer.shadowMap.autoUpdate = false;
   const canvas = renderer.domElement;
   canvas.setAttribute('role', 'img');
-  canvas.setAttribute('aria-label', '夜色中的庭院。皮影小人只能走在影子里，拖动或点击灯笼改变影子，点击发蓝的石板让她走过去。键盘按 R 转动灯笼。');
+  canvas.setAttribute('aria-label', '白色雕塑园。墨水小精灵只能待在影子里，拖动或点击光球改变影子，点击有墨点的石板让它走过去。键盘按 R 转动光球。');
   stage.appendChild(canvas);
 
   const ISO = new THREE.Vector3(1, 1, 1).normalize();
@@ -357,25 +351,24 @@
   camera.position.copy(ISO).multiplyScalar(150);
   camera.lookAt(0, 0, 0);
 
-  scene.add(new THREE.HemisphereLight(0x6c7cd0, 0x1a1530, 0.55));
-  const moonLight = new THREE.DirectionalLight(0xa9b8ff, 0.3);
-  moonLight.position.set(-0.4, 1, 0.55);
-  scene.add(moonLight);
+  scene.add(new THREE.HemisphereLight(0xdde2f6, 0x8f877c, 0.5));
+  const fill = new THREE.DirectionalLight(0xffffff, 0.12);
+  fill.position.set(-0.3, 1, 0.6);
+  scene.add(fill);
 
   // ---------- materials ----------
+  const INK = 0x24263a;
   const phong = (c, o) => new THREE.MeshPhongMaterial(Object.assign({ color: c, specular: 0x000000, shininess: 4 }, o || {}));
   const MAT = {
-    floor: [phong(0xb4aca4), phong(0xaba39c), phong(0xbbb3aa)],
-    plinth: phong(0x3a3556),
-    plinthDeep: phong(0x2b2747),
-    plaster: phong(0xdcd3c3),
-    cap: phong(0x3b3d54),
-    stone: phong(0x9f99ab),
-    stoneDark: phong(0x6c6680),
-    lacquer: phong(0x93302a),
-    wood: phong(0x3a2a24),
-    gold: phong(0xe0aa52, { emissive: 0x3a2200 }),
-    lantern: phong(0xd8402d, { emissive: 0xc8401f }),
+    floor: [phong(0xebe6de), phong(0xe5dfd6), phong(0xefeae3)],
+    // walls and sculptures carry a little self-light so they stay chalk-white on their unlit
+    // faces; the floor has none, which keeps the shadows it receives deep
+    plinth: phong(0xe4ded5, { emissive: 0x3b3833 }),
+    plinthDeep: phong(0xd9d2c8, { emissive: 0x34312c }),
+    plaster: phong(0xf4f1ec, { emissive: 0x4a4744 }),
+    plasterWarm: phong(0xece5dc, { emissive: 0x45413c }),
+    clay: phong(0xc98e72, { emissive: 0x2e1a12 }),
+    black: phong(0x2a2b36),
   };
 
   // ---------- builders ----------
@@ -396,10 +389,6 @@
     m.scale.set(sx, sy, sz);
     return m;
   }
-  const flatNormals = (g) => { const n = g.toNonIndexed(); n.computeVertexNormals(); return n; };
-  const PYR_UP = (() => { const g = new THREE.ConeGeometry(Math.SQRT1_2, 1, 4); g.rotateY(Math.PI / 4); return flatNormals(g); })();
-  const PYR_DOWN = (() => { const g = new THREE.ConeGeometry(Math.SQRT1_2, 1, 4); g.rotateY(Math.PI / 4); g.rotateX(Math.PI); return flatNormals(g); })();
-  const CYL = (r, h, seg) => new THREE.CylinderGeometry(r, r, h, seg || 20);
   function canvasTexture(w, h, draw) {
     const c = document.createElement('canvas');
     c.width = w;
@@ -415,47 +404,47 @@
     g.fillRect(0, 0, 128, 128);
   });
 
-  // ---------- courtyard ----------
+  // ---------- the court ----------
   for (let x = 0; x < N; x++) {
     for (let z = 0; z < N; z++) {
-      const slab = box(x, -0.12, z, 0.95, 0.24, 0.95, MAT.floor[(x * 7 + z * 3) % 3]);
+      const slab = box(x, -0.12, z, 0.97, 0.24, 0.97, MAT.floor[(x * 7 + z * 3) % 3]);
       if (TILES.has(key(x, z))) slab.userData.tile = key(x, z);
     }
   }
-  box(1, -0.12, -1, 0.95, 0.24, 1, MAT.floor[0]).userData.tile = GATE;
+  box(1, -0.12, -1, 0.97, 0.24, 1, MAT.floor[0]).userData.tile = GATE;
   box(2.5, -0.55, 2.5, 8, 0.62, 8, MAT.plinth, scene, { cast: false });
-  box(2.5, -1.1, 2.5, 7, 0.5, 7, MAT.plinthDeep, scene, { cast: false, pick: false });
-  box(2.5, -1.55, 2.5, 5.6, 0.4, 5.6, MAT.plinthDeep, scene, { cast: false, pick: false });
-  const keel = mesh(PYR_DOWN, MAT.plinthDeep, scene, { cast: false, pick: false });
-  keel.scale.set(4.6, 2.6, 4.6);
-  keel.position.set(2.5, -1.75 - 1.3, 2.5);
+  box(2.5, -1.04, 2.5, 7.3, 0.36, 7.3, MAT.plinthDeep, scene, { cast: false, pick: false });
 
-  // back wall with the moon gate cut through it
+  // back wall with a dark doorway cut through it
   const WALL_H = 2.3;
   const backShape = new THREE.Shape();
-  {
-    const cx = 1, cy = 0.62, r = 0.85;
-    const a = Math.asin(cy / r), half = Math.sqrt(r * r - cy * cy);
-    backShape.moveTo(-1.5, 0);
-    backShape.lineTo(cx - half, 0);
-    backShape.absarc(cx, cy, r, Math.PI + a, -a, true);
-    backShape.lineTo(6.5, 0);
-    backShape.lineTo(6.5, WALL_H);
-    backShape.lineTo(-1.5, WALL_H);
-    backShape.closePath();
-  }
-  const backWall = mesh(new THREE.ExtrudeGeometry(backShape, { depth: 1, bevelEnabled: false, curveSegments: 48 }), MAT.plaster);
+  backShape.moveTo(-1.5, 0);
+  backShape.lineTo(0.6, 0);
+  backShape.lineTo(0.6, 1.7);
+  backShape.lineTo(1.4, 1.7);
+  backShape.lineTo(1.4, 0);
+  backShape.lineTo(6.5, 0);
+  backShape.lineTo(6.5, WALL_H);
+  backShape.lineTo(-1.5, WALL_H);
+  backShape.closePath();
+  const backWall = mesh(new THREE.ExtrudeGeometry(backShape, { depth: 1, bevelEnabled: false }), MAT.plaster);
   backWall.position.z = -1.5;
-  box(2.5, WALL_H + 0.07, -1, 8.2, 0.14, 1.24, MAT.cap);
-  box(2.5, WALL_H + 0.19, -1, 8.2, 0.1, 0.34, MAT.cap);
 
-  // moonlight beyond the gate
-  const beyondMat = new THREE.MeshBasicMaterial({ map: radial('#e8edff', '#2b3570') });
-  const beyond = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 2.6), beyondMat);
-  beyond.position.set(1, 0.7, -1.56);
+  // the doorway is filled with ink: the one dark place in a white room, where the spirit belongs
+  const beyondMat = new THREE.MeshBasicMaterial({
+    map: canvasTexture(16, 128, (g, w, h) => {
+      const grd = g.createLinearGradient(0, 0, 0, h);
+      grd.addColorStop(0, '#3b3d5c');
+      grd.addColorStop(1, '#17182a');
+      g.fillStyle = grd;
+      g.fillRect(0, 0, w, h);
+    }),
+  });
+  const beyond = new THREE.Mesh(new THREE.PlaneGeometry(0.8, 1.7), beyondMat);
+  beyond.position.set(1, 0.85, -0.52);
   scene.add(beyond);
 
-  // left wall with a lattice window
+  // left wall with a single horizontal slit
   const leftShape = new THREE.Shape();
   leftShape.moveTo(-1.5, 0);
   leftShape.lineTo(6.5, 0);
@@ -463,120 +452,113 @@
   leftShape.lineTo(-1.5, WALL_H);
   leftShape.closePath();
   {
-    const hole = new THREE.Path();
-    for (let i = 0; i < 8; i++) {
-      const a = Math.PI / 8 + i * (Math.PI / 4);
-      const px = 2.5 + Math.cos(a) * 0.6, py = 1.25 + Math.sin(a) * 0.6;
-      if (i === 0) hole.moveTo(px, py); else hole.lineTo(px, py);
-    }
-    hole.closePath();
-    leftShape.holes.push(hole);
+    const slit = new THREE.Path();
+    slit.moveTo(0.6, 1.56);
+    slit.lineTo(4.6, 1.56);
+    slit.lineTo(4.6, 1.64);
+    slit.lineTo(0.6, 1.64);
+    slit.closePath();
+    leftShape.holes.push(slit);
   }
   const leftWall = mesh(new THREE.ExtrudeGeometry(leftShape, { depth: 1, bevelEnabled: false }), MAT.plaster);
   leftWall.rotation.y = -Math.PI / 2;
   leftWall.position.x = -0.5;
-  // the left caps start where the back caps end, so the corner has no overlapping faces
-  box(-1, WALL_H + 0.07, 3.11, 1.24, 0.14, 6.98, MAT.cap);
-  box(-1, WALL_H + 0.19, 2.885, 0.34, 0.1, 7.43, MAT.cap);
-  [-1, 1].forEach((s) => {
-    [-0.32, 0, 0.32].forEach((o) => {
-      const bar = box(-1, 1.25, 2.5 + o, 0.05, 1.5, 0.04, MAT.wood);
-      bar.rotation.x = s * Math.PI / 4;
-    });
+
+  // sculptures (the occluders). Anything above the orb's height cannot touch the floor shadow,
+  // so the tops are free to be ornamental.
+  {
+    const a = PILLARS[0];
+    box(a.x, 1.25, a.z, 0.7, 2.5, 0.7, MAT.plaster);
+    mesh(new THREE.SphereGeometry(0.3, 32, 20), MAT.plaster).position.set(a.x, 2.8, a.z);
+    const b = PILLARS[1];
+    box(b.x, 1.15, b.z, 0.7, 2.3, 0.7, MAT.plasterWarm);
+    // a cube balanced on one corner: turn its body diagonal upright
+    const cube = box(b.x, 2.3 + 0.42 * Math.sqrt(3) / 2, b.z, 0.42, 0.42, 0.42, MAT.plaster);
+    cube.rotation.set(0, Math.PI / 4, Math.atan(Math.SQRT2), 'ZYX');
+    const c = PILLARS[2];
+    box(c.x, 0.425, c.z, 0.7, 0.85, 0.7, MAT.clay);
+    box(c.x, 1.025, c.z, 0.7, 0.35, 0.7, MAT.plaster);
+  }
+  WALLS.forEach((w, i) => {
+    box(w.x, w.h / 2, w.z0 + (w.len - 1) / 2, 0.36, w.h, w.len, i ? MAT.plasterWarm : MAT.plaster);
   });
 
-  // pillars and low walls (the occluders)
-  PILLARS.forEach((p) => {
-    if (p.h > 2) {
-      box(p.x, 0.06, p.z, 0.8, 0.12, 0.8, MAT.stone);
-      box(p.x, 1.25, p.z, 0.7, 2.5, 0.7, MAT.lacquer);
-      box(p.x, 2.57, p.z, 0.9, 0.14, 0.9, MAT.cap);
-      box(p.x, 2.76, p.z, 0.58, 0.24, 0.58, MAT.stone);
-      const roof = mesh(PYR_UP, MAT.cap);
-      roof.scale.set(0.82, 0.4, 0.82);
-      roof.position.set(p.x, 2.88 + 0.2, p.z);
-    } else {
-      box(p.x, 0.53, p.z, 0.7, 1.06, 0.7, MAT.stone);
-      box(p.x, 1.13, p.z, 0.7, 0.14, 0.7, MAT.stoneDark);
-    }
-  });
-  WALLS.forEach((w) => {
-    const zc = w.z0 + (w.len - 1) / 2;
-    box(w.x, 0.43, zc, 0.36, 0.86, w.len, MAT.plaster);
-    box(w.x, 0.93, zc, 0.36, 0.14, w.len, MAT.cap);
-  });
-
-  // ---------- the lantern ----------
+  // ---------- the orb ----------
   const LAMP_PART = { cast: false, receive: false };
   const post = new THREE.Group();
   post.position.set(POST.x, 0, POST.z);
   scene.add(post);
-  box(0, 0.1, 0, 0.44, 0.2, 0.44, MAT.stoneDark, post, LAMP_PART).userData.lamp = true;
-  const pole = mesh(CYL(0.06, 2.6), MAT.wood, post, LAMP_PART);
-  pole.position.y = 1.3;
+  const foot = mesh(new THREE.CylinderGeometry(0.16, 0.16, 0.04, 28), MAT.black, post, LAMP_PART);
+  foot.position.y = 0.02;
+  foot.userData.lamp = true;
+  const pole = mesh(new THREE.CylinderGeometry(0.03, 0.03, LAMP_Y + 0.12, 12), MAT.black, post, LAMP_PART);
+  pole.position.y = (LAMP_Y + 0.12) / 2;
   pole.userData.lamp = true;
-  mesh(new THREE.SphereGeometry(0.09, 16, 10), MAT.gold, post, LAMP_PART).position.y = 2.66;
+
+  // a faint orbit with its eight resting points shows where the orb can go
+  const guideMat = new THREE.MeshBasicMaterial({ color: INK, transparent: true, opacity: 0.16, depthWrite: false });
+  const guide = new THREE.Mesh(new THREE.TorusGeometry(ARM_R, 0.006, 6, 128), guideMat);
+  guide.rotation.x = Math.PI / 2;
+  guide.position.y = LAMP_Y;
+  post.add(guide);
+  const stopGeo = new THREE.SphereGeometry(0.022, 10, 8);
+  const stopMat = new THREE.MeshBasicMaterial({ color: INK, transparent: true, opacity: 0.35, depthWrite: false });
+  for (let k = 0; k < 8; k++) {
+    const d = new THREE.Mesh(stopGeo, stopMat);
+    d.position.set(ARM_R * Math.cos(k * STEP), LAMP_Y, ARM_R * Math.sin(k * STEP));
+    post.add(d);
+  }
 
   const arm = new THREE.Group();
-  arm.position.y = 2.5;
+  arm.position.y = LAMP_Y;
   post.add(arm);
-  box(ARM_R / 2, 0, 0, ARM_R + 0.12, 0.06, 0.06, MAT.wood, arm, LAMP_PART).userData.lamp = true;
-  mesh(CYL(0.008, 0.2, 6), MAT.wood, arm, LAMP_PART).position.set(ARM_R, -0.1, 0);
+  const rod = mesh(new THREE.CylinderGeometry(0.012, 0.012, ARM_R, 8), MAT.black, arm, LAMP_PART);
+  rod.rotation.z = Math.PI / 2;
+  rod.position.x = ARM_R / 2;
+  rod.userData.lamp = true;
 
-  const lantern = new THREE.Group();
-  lantern.position.set(ARM_R, LAMP_Y - 2.5, 0);
-  arm.add(lantern);
-  const shell = new THREE.Group();
-  lantern.add(shell);
-  const body = mesh(new THREE.SphereGeometry(0.2, 24, 16), MAT.lantern, shell, LAMP_PART);
-  body.scale.y = 1.2;
-  body.userData.lamp = true;
-  mesh(CYL(0.09, 0.05), MAT.gold, shell, LAMP_PART).position.y = 0.25;
-  mesh(CYL(0.09, 0.05), MAT.gold, shell, LAMP_PART).position.y = -0.25;
-  mesh(CYL(0.015, 0.22, 6), MAT.lantern, shell, LAMP_PART).position.y = -0.38;
-  const grab = mesh(new THREE.SphereGeometry(0.5, 12, 8), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }), lantern, LAMP_PART);
+  const orbGroup = new THREE.Group();
+  orbGroup.position.x = ARM_R;
+  arm.add(orbGroup);
+  const orb = mesh(new THREE.SphereGeometry(0.16, 32, 20), new THREE.MeshBasicMaterial({ color: 0xfff4e2 }), orbGroup, LAMP_PART);
+  orb.userData.lamp = true;
+  const grab = mesh(new THREE.SphereGeometry(0.5, 12, 8), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }), orbGroup, LAMP_PART);
   grab.userData.lamp = true;
   const glow = new THREE.Sprite(new THREE.SpriteMaterial({
-    map: radial('rgba(255,190,110,0.9)', 'rgba(255,140,60,0)'),
+    map: radial('rgba(255,214,160,0.95)', 'rgba(255,190,120,0)'),
     blending: THREE.AdditiveBlending, depthWrite: false, transparent: true,
   }));
-  glow.scale.setScalar(1.7);
-  lantern.add(glow);
+  glow.scale.setScalar(1.5);
+  orbGroup.add(glow);
 
-  const lampLight = new THREE.PointLight(0xff9a45, 1.9, 11, 1.25);
+  const lampLight = new THREE.PointLight(0xffe2b8, 1.45, 11, 1.3);
   lampLight.castShadow = true;
   lampLight.shadow.mapSize.set(1024, 1024);
   lampLight.shadow.bias = -0.003;
   lampLight.shadow.camera.near = 0.05;
   lampLight.shadow.camera.far = 14;
-  lantern.add(lampLight);
+  orbGroup.add(lampLight);
 
   const hintRing = new THREE.Mesh(
-    new THREE.TorusGeometry(0.42, 0.012, 8, 64),
-    new THREE.MeshBasicMaterial({ color: 0xffd9a8, transparent: true, opacity: 0.8, depthWrite: false })
+    new THREE.TorusGeometry(0.3, 0.008, 8, 64),
+    new THREE.MeshBasicMaterial({ color: INK, transparent: true, opacity: 0.6, depthWrite: false })
   );
   hintRing.rotation.x = Math.PI / 2;
-  lantern.add(hintRing);
+  orbGroup.add(hintRing);
 
-  // ---------- shadow-path markers ----------
+  // ---------- walkable-shadow markers: an ink ring and dot ----------
   const MOTIF = canvasTexture(128, 128, (g) => {
     g.strokeStyle = '#ffffff';
     g.fillStyle = '#ffffff';
-    g.shadowColor = '#ffffff';
-    g.shadowBlur = 8;
     g.lineWidth = 3;
-    const diamond = (r) => { g.beginPath(); g.moveTo(64, 64 - r); g.lineTo(64 + r, 64); g.lineTo(64, 64 + r); g.lineTo(64 - r, 64); g.closePath(); g.stroke(); };
-    diamond(48);
-    g.lineWidth = 2;
-    diamond(24);
-    g.beginPath(); g.arc(64, 64, 4, 0, TAU); g.fill();
-    [[20, 20], [108, 20], [20, 108], [108, 108]].forEach(([x, y]) => { g.beginPath(); g.arc(x, y, 3, 0, TAU); g.fill(); });
+    g.beginPath(); g.arc(64, 64, 30, 0, TAU); g.stroke();
+    g.beginPath(); g.arc(64, 64, 7, 0, TAU); g.fill();
   });
   const markerGeo = new THREE.PlaneGeometry(0.8, 0.8);
   markerGeo.rotateX(-Math.PI / 2);
   TILES.forEach((t) => {
     const m = new THREE.Mesh(markerGeo, new THREE.MeshBasicMaterial({
-      map: MOTIF, color: 0x9fb6ff, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false,
+      map: MOTIF, color: INK, transparent: true, opacity: 0, depthWrite: false,
     }));
     m.position.set(t.x, 0.012, t.z);
     m.renderOrder = 2;
@@ -585,98 +567,88 @@
     t.lit = 0;
   });
 
-  // ---------- drifting motes ----------
-  const MOTES = 18;
+  // ---------- dust in the light ----------
+  const MOTES = 16;
   const moteGeo = new THREE.BufferGeometry();
   const motePos = new Float32Array(MOTES * 3);
   const moteSeed = [];
   for (let i = 0; i < MOTES; i++) moteSeed.push([Math.random() * 7 - 0.5, 0.4 + Math.random() * 2, Math.random() * 7 - 0.5, Math.random() * TAU]);
   moteGeo.setAttribute('position', new THREE.BufferAttribute(motePos, 3));
   const motes = new THREE.Points(moteGeo, new THREE.PointsMaterial({
-    size: 3, sizeAttenuation: false, color: 0xffc68a, transparent: true, opacity: 0.75,
+    size: 2.5, sizeAttenuation: false, color: 0xffffff, transparent: true, opacity: 0.7,
     blending: THREE.AdditiveBlending, depthWrite: false,
   }));
   scene.add(motes);
 
-  // ---------- the shadow puppet ----------
-  function drawPuppet(g, flip) {
-    if (flip) { g.translate(240, 0); g.scale(-1, 1); }
-    g.translate(120, 0);
-    const LINE = '#2a1712', RED = '#b8352a', LEATHER = '#efcf98', TEAL = '#2e6e68', GOLD = '#d9a441';
-    g.lineJoin = 'round';
-    g.lineCap = 'round';
-    g.lineWidth = 4;
-    g.strokeStyle = LINE;
-    const shape = (pts, fill) => {
-      g.beginPath();
-      g.moveTo(pts[0][0], pts[0][1]);
-      for (let i = 1; i < pts.length; i++) g.lineTo(pts[i][0], pts[i][1]);
-      g.closePath();
-      g.fillStyle = fill;
-      g.fill();
-      g.stroke();
-    };
-    shape([[-24, 110], [-50, 192], [-36, 202], [-12, 132]], TEAL);                 // back sleeve
-    shape([[-30, 104], [30, 104], [54, 318], [-50, 318]], RED);                    // robe
-    shape([[-50, 298], [54, 298], [56, 322], [-52, 322]], TEAL);                   // hem
-    shape([[-14, 104], [16, 104], [2, 142]], LEATHER);                             // collar
-    shape([[-38, 178], [40, 178], [42, 192], [-40, 192]], GOLD);                   // belt
-    g.fillStyle = LEATHER;
-    [[-10, 222], [14, 222], [2, 246], [-22, 264], [26, 264], [2, 282]].forEach(([x, y]) => {
-      g.beginPath(); g.arc(x, y, 5, 0, TAU); g.fill();
-    });
-    shape([[18, 110], [40, 112], [68, 196], [50, 204]], TEAL);                     // front sleeve
-    g.beginPath(); g.arc(62, 208, 9, 0, TAU); g.fillStyle = LEATHER; g.fill(); g.stroke();
-    g.fillStyle = LINE;
-    g.beginPath(); g.ellipse(-16, 332, 16, 8, 0, 0, TAU); g.fill();
-    g.beginPath(); g.ellipse(22, 332, 18, 8, 0, 0, TAU); g.fill();
-    shape([[-8, 86], [10, 86], [10, 106], [-8, 106]], LEATHER);                    // neck
-    g.beginPath();                                                                  // face in profile
-    g.moveTo(-26, 46);
-    g.quadraticCurveTo(-30, 84, -6, 94);
-    g.lineTo(14, 94);
-    g.quadraticCurveTo(24, 92, 26, 84);
-    g.lineTo(30, 78);
-    g.lineTo(26, 72);
-    g.lineTo(37, 63);
-    g.lineTo(28, 54);
-    g.quadraticCurveTo(26, 44, 18, 40);
-    g.closePath();
-    g.fillStyle = LEATHER;
-    g.fill();
-    g.stroke();
-    g.lineWidth = 3;
-    g.beginPath(); g.moveTo(6, 56); g.quadraticCurveTo(15, 51, 24, 56); g.stroke();
-    g.beginPath(); g.moveTo(9, 64); g.quadraticCurveTo(17, 60, 25, 64); g.quadraticCurveTo(17, 67, 9, 64); g.fillStyle = LINE; g.fill();
-    g.lineWidth = 4;
-    shape([[-30, 48], [-28, 24], [-10, 12], [14, 12], [26, 26], [28, 48]], LINE); // hat
-    shape([[-28, 32], [-76, 24], [-78, 34], [-28, 44]], LINE);                     // hat wing
-    g.fillStyle = RED;
-    g.beginPath(); g.arc(-2, 12, 6, 0, TAU); g.fill();
-    g.strokeStyle = 'rgba(42, 23, 18, 0.8)';                                         // control rods
-    g.lineWidth = 3;
-    g.beginPath(); g.moveTo(2, 100); g.lineTo(-30, 356); g.stroke();
-    g.beginPath(); g.moveTo(62, 208); g.lineTo(86, 356); g.stroke();
-  }
-  const texRight = canvasTexture(240, 360, (g) => drawPuppet(g, false));
-  const texLeft = canvasTexture(240, 360, (g) => drawPuppet(g, true));
-  // a vertical card turned toward the camera; 0.816 undoes the isometric squash
-  const PUP_H = 1.05, PUP_W = PUP_H * 0.816 * (240 / 360);
-  const puppetGeo = new THREE.PlaneGeometry(PUP_W, PUP_H);
-  puppetGeo.translate(0, PUP_H / 2, 0);
-  const puppetMat = new THREE.MeshBasicMaterial({ map: texRight, alphaTest: 0.45, side: THREE.DoubleSide });
-  const puppet = new THREE.Mesh(puppetGeo, puppetMat);
+  // ---------- the ink spirit ----------
+  const inkMat = new THREE.MeshBasicMaterial({ color: INK });
+  const whiteMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
   const char = new THREE.Group();
-  char.rotation.y = Math.PI / 4;
-  char.add(puppet);
+  char.scale.setScalar(1.25);
   scene.add(char);
+  const blob = new THREE.Group();
+  char.add(blob);
+  const DR = 0.17, DH = 0.44, dropPts = [];
+  for (let i = 0; i <= 10; i++) {
+    const a = -Math.PI / 2 + (i / 10) * (Math.PI / 2);
+    dropPts.push(new THREE.Vector2(DR * Math.cos(a), DR + DR * Math.sin(a)));
+  }
+  for (let j = 1; j <= 10; j++) {
+    const s = j / 10;
+    dropPts.push(new THREE.Vector2(DR * Math.pow(1 - s, 1.3) * (1 + 0.15 * Math.sin(s * Math.PI)), DR + s * (DH - DR)));
+  }
+  blob.add(new THREE.Mesh(new THREE.LatheGeometry(dropPts, 32), inkMat));
+  // the face is a flat card turned toward the camera, like the eyes on a cartoon
+  const face = new THREE.Group();
+  face.rotation.y = Math.PI / 4;
+  face.position.y = 0.17;
+  blob.add(face);
+  const eyes = new THREE.Group();
+  face.add(eyes);
+  const EYE = new THREE.CircleGeometry(0.036, 20), PUPIL = new THREE.CircleGeometry(0.019, 16);
+  const pupils = [];
+  [-0.055, 0.055].forEach((x) => {
+    const e = new THREE.Mesh(EYE, whiteMat);
+    e.position.set(x, 0, 0.172);
+    e.scale.y = 1.25;
+    eyes.add(e);
+    const p = new THREE.Mesh(PUPIL, inkMat);
+    p.position.set(x, -0.004, 0.175);
+    eyes.add(p);
+    pupils.push({ mesh: p, x });
+  });
+  const shine = new THREE.Mesh(new THREE.CircleGeometry(0.018, 12), whiteMat);
+  shine.position.set(-0.07, 0.06, 0.13);
+  face.add(shine);
+  let lookX = -1;
+  function look(dir) {
+    lookX = dir;
+    pupils.forEach((p) => { p.mesh.position.x = p.x + dir * 0.012; });
+  }
+
+  // ink stains left behind on every step
+  const STAIN = new THREE.CircleGeometry(1, 18);
+  STAIN.rotateX(-Math.PI / 2);
+  const stains = [];
+  function stain(x, z) {
+    const m = new THREE.Mesh(STAIN, new THREE.MeshBasicMaterial({ color: INK, transparent: true, opacity: 0.45, depthWrite: false }));
+    m.scale.setScalar(0.035 + Math.random() * 0.035);
+    m.position.set(x + (Math.random() - 0.5) * 0.3, 0.008, z + (Math.random() - 0.5) * 0.3);
+    m.renderOrder = 1;
+    scene.add(m);
+    stains.push({ m, t: 0 });
+    if (stains.length > 30) { const old = stains.shift(); scene.remove(old.m); old.m.material.dispose(); }
+  }
+  function clearStains() {
+    stains.forEach((s) => { scene.remove(s.m); s.m.material.dispose(); });
+    stains.length = 0;
+  }
 
   // ---------- sound ----------
-  const SCALE = [293.66, 329.63, 369.99, 440, 493.88, 587.33, 659.25];
+  const SCALE = [261.63, 329.63, 392.0, 493.88, 587.33, 659.25, 783.99];
   const Sound = {
     ctx: null,
     on: true,
-    cache: new Map(),
     ni: 0,
     ensure() {
       if (this.ctx) { if (this.ctx.state === 'suspended') this.ctx.resume(); return; }
@@ -688,12 +660,12 @@
       this.master.gain.value = this.on ? 0.9 : 0;
       this.master.connect(c.destination);
       this.dry = c.createGain();
-      this.dry.gain.value = 0.8;
+      this.dry.gain.value = 0.75;
       this.dry.connect(this.master);
       const verb = c.createConvolver();
-      verb.buffer = this.impulse(3.4);
+      verb.buffer = this.impulse(3.6);
       this.wet = c.createGain();
-      this.wet.gain.value = 0.42;
+      this.wet.gain.value = 0.5;
       this.wet.connect(verb);
       verb.connect(this.master);
       this.ambience();
@@ -702,47 +674,24 @@
       const c = this.ctx, n = Math.floor(c.sampleRate * sec), buf = c.createBuffer(2, n, c.sampleRate);
       for (let ch = 0; ch < 2; ch++) {
         const d = buf.getChannelData(ch);
-        for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 2.8);
+        for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 3);
       }
       return buf;
     },
     send(node) { node.connect(this.dry); node.connect(this.wet); },
-    // Karplus-Strong pluck, close enough to a guqin string at night
-    string(freq) {
-      const k = Math.round(freq);
-      if (this.cache.has(k)) return this.cache.get(k);
-      const sr = this.ctx.sampleRate, len = Math.floor(sr * 2.4);
-      const buf = this.ctx.createBuffer(1, len, sr), d = buf.getChannelData(0);
-      const P = Math.max(2, Math.round(sr / freq)), line = new Float32Array(P);
-      for (let i = 0; i < P; i++) line[i] = Math.random() * 2 - 1;
-      for (let i = 1; i < P; i++) line[i] = 0.5 * (line[i] + line[i - 1]);
-      for (let i = 0, j = 0; i < len; i++) {
-        const cur = line[j];
-        line[j] = 0.4985 * (cur + line[(j + 1) % P]);
-        d[i] = cur;
-        j = (j + 1) % P;
-      }
-      this.cache.set(k, buf);
-      return buf;
-    },
-    pluck(freq, delay, vol) {
+    // a soft felt-piano note: a few sine partials through a gentle low-pass
+    piano(freq, delay, vol, decay) {
       const c = this.ctx;
       if (!c) return;
-      const s = c.createBufferSource(), g = c.createGain();
-      s.buffer = this.string(freq);
-      g.gain.value = vol;
-      s.connect(g);
-      this.send(g);
-      s.start(c.currentTime + (delay || 0));
-    },
-    bell(freq, delay, vol, decay) {
-      const c = this.ctx;
-      if (!c) return;
-      const t = c.currentTime + (delay || 0), g = c.createGain();
+      decay = decay || 2.2;
+      const t = c.currentTime + (delay || 0), g = c.createGain(), lp = c.createBiquadFilter();
+      lp.type = 'lowpass';
+      lp.frequency.value = 2400;
       g.gain.setValueAtTime(0.0001, t);
-      g.gain.exponentialRampToValueAtTime(vol, t + 0.01);
+      g.gain.exponentialRampToValueAtTime(vol, t + 0.006);
+      g.gain.exponentialRampToValueAtTime(vol * 0.35, t + 0.25);
       g.gain.exponentialRampToValueAtTime(0.0001, t + decay);
-      [[1, 1], [2.76, 0.3]].forEach(([m, a]) => {
+      [[1, 1], [2, 0.32], [3, 0.1], [4.02, 0.04]].forEach(([m, a]) => {
         const o = c.createOscillator(), og = c.createGain();
         o.frequency.value = freq * m;
         og.gain.value = a;
@@ -751,81 +700,70 @@
         o.start(t);
         o.stop(t + decay + 0.1);
       });
-      this.send(g);
+      g.connect(lp);
+      this.send(lp);
     },
-    tap(freq, vol) {
+    drip() {
       const c = this.ctx;
       if (!c) return;
-      const t = c.currentTime, n = Math.floor(c.sampleRate * 0.05);
-      const buf = c.createBuffer(1, n, c.sampleRate), d = buf.getChannelData(0);
-      for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 4);
-      const s = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain();
-      s.buffer = buf;
-      f.type = 'bandpass';
-      f.frequency.value = freq;
-      f.Q.value = 6;
-      g.gain.value = vol;
-      s.connect(f);
-      f.connect(g);
+      const t = c.currentTime, o = c.createOscillator(), g = c.createGain();
+      o.frequency.setValueAtTime(1300 + Math.random() * 300, t);
+      o.frequency.exponentialRampToValueAtTime(480, t + 0.07);
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.05, t + 0.005);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.1);
+      o.connect(g);
       this.send(g);
-      s.start(t);
+      o.start(t);
+      o.stop(t + 0.12);
     },
-    step() { this.tap(900 + Math.random() * 300, 0.35); },
-    arrive() { this.ni = (this.ni + 1) % SCALE.length; this.pluck(SCALE[this.ni], 0, 0.11); },
-    creak() { this.tap(2400 + Math.random() * 500, 0.12); },
-    rest() { this.bell(1760, 0, 0.025, 1.4); this.bell(2637, 0.06, 0.018, 1.6); },
-    blocked() { this.pluck(146.83, 0, 0.16); this.pluck(155.56, 0.02, 0.1); },
-    nope() { this.pluck(220, 0, 0.08); },
+    glass() {
+      const c = this.ctx;
+      if (!c) return;
+      const t = c.currentTime, o = c.createOscillator(), g = c.createGain();
+      o.frequency.value = 3100 + Math.random() * 400;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.012, t + 0.004);
+      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.05);
+      o.connect(g);
+      this.send(g);
+      o.start(t);
+      o.stop(t + 0.06);
+    },
+    step() { this.drip(); },
+    arrive() { this.ni = (this.ni + 1) % SCALE.length; this.piano(SCALE[this.ni], 0, 0.07); },
+    creak() { this.glass(); },
+    rest() { this.piano(1046.5, 0, 0.035, 2.6); },
+    blocked() { this.piano(130.81, 0, 0.09, 1.2); this.piano(138.59, 0.015, 0.06, 1.2); },
+    nope() { this.piano(196, 0, 0.05, 0.8); },
     win() {
-      [293.66, 369.99, 440, 587.33, 739.99, 880].forEach((f, i) => this.pluck(f, i * 0.16, 0.12));
-      this.bell(1174.66, 1.0, 0.04, 3);
+      [261.63, 392, 493.88, 587.33, 783.99, 987.77].forEach((f, i) => this.piano(f, i * 0.18, 0.08, 3));
+      this.piano(130.81, 1.1, 0.06, 4);
     },
     ambience() {
       const c = this.ctx, t = c.currentTime;
-      const g = c.createGain();
-      g.gain.setValueAtTime(0.0001, t);
-      g.gain.exponentialRampToValueAtTime(0.035, t + 4);
-      [73.42, 110].forEach((f) => {
-        const o = c.createOscillator();
-        o.frequency.value = f;
-        o.connect(g);
-        o.start(t);
-      });
-      const n = Math.floor(c.sampleRate * 2), nb = c.createBuffer(1, n, c.sampleRate), nd = nb.getChannelData(0);
-      for (let i = 0; i < n; i++) nd[i] = Math.random() * 2 - 1;
-      const wind = c.createBufferSource(), lp = c.createBiquadFilter(), wg = c.createGain();
-      wind.buffer = nb;
-      wind.loop = true;
+      const g = c.createGain(), lp = c.createBiquadFilter();
       lp.type = 'lowpass';
-      lp.frequency.value = 380;
-      wg.gain.value = 0.18;
-      wind.connect(lp);
-      lp.connect(wg);
-      wg.connect(g);
-      wind.start(t);
-      this.send(g);
-      const chirp = () => {
-        if (this.on && document.visibilityState === 'visible') {
-          const now = c.currentTime, pan = c.createStereoPanner ? c.createStereoPanner() : null;
-          const cg = c.createGain();
-          cg.gain.value = 0;
-          for (let i = 0; i < 3; i++) {
-            const s = now + i * 0.06;
-            cg.gain.setValueAtTime(0, s);
-            cg.gain.linearRampToValueAtTime(0.006, s + 0.01);
-            cg.gain.linearRampToValueAtTime(0, s + 0.035);
-          }
+      lp.frequency.value = 900;
+      g.gain.setValueAtTime(0.0001, t);
+      g.gain.exponentialRampToValueAtTime(0.022, t + 5);
+      [130.81, 196, 329.63, 493.88].forEach((f, i) => {
+        [-3, 3].forEach((cents) => {
           const o = c.createOscillator();
-          o.frequency.value = 4300 + Math.random() * 600;
-          o.connect(cg);
-          if (pan) { pan.pan.value = Math.random() * 1.6 - 0.8; cg.connect(pan); pan.connect(this.dry); }
-          else cg.connect(this.dry);
-          o.start(now);
-          o.stop(now + 0.25);
-        }
-        setTimeout(chirp, 1400 + Math.random() * 2800);
-      };
-      setTimeout(chirp, 2000);
+          o.frequency.value = f;
+          o.detune.value = cents + i;
+          o.connect(lp);
+          o.start(t);
+        });
+      });
+      const lfo = c.createOscillator(), depth = c.createGain();
+      lfo.frequency.value = 0.05;
+      depth.gain.value = 300;
+      lfo.connect(depth);
+      depth.connect(lp.frequency);
+      lfo.start(t);
+      lp.connect(g);
+      this.send(g);
     },
     toggle(on) {
       this.on = on;
@@ -834,7 +772,7 @@
   };
 
   // ---------- state ----------
-  const state = { theta: START_K * STEP, k: START_K, won: false, moved: false, rotated: false, winT: -1, shake: 0, shiver: 0 };
+  const state = { theta: START_K * STEP, k: START_K, won: false, moved: false, rotated: false, winT: -1, shake: 0, shiver: 0, land: 0, blinkAt: 2 };
   let shade = new Set();
   let liveShade = new Set();
   const walker = { tile: START, step: null, path: [], pending: null, exit: null };
@@ -851,7 +789,7 @@
     renderer.shadowMap.needsUpdate = true;
     liveShade = shadeAt(theta);
   }
-  // how far the lantern can travel toward `to` before its light would reach her
+  // how far the orb can travel toward `to` before its light would reach the spirit
   function safeReach(from, to) {
     const tile = TILES.get(walker.tile);
     const dir = Math.sign(to - from);
@@ -889,7 +827,7 @@
     state.shake = 1;
     state.shiver = 1;
     Sound.blocked();
-    flashHint('再转下去，灯光就会照到她', true);
+    flashHint('再转下去，光就会照到它', true);
   }
 
   // ---------- hints ----------
@@ -914,18 +852,18 @@
   function updateHint() {
     if (flashing) return;
     if (state.won) return showHint('');
-    if (!state.rotated && !state.moved) return showHint('她只能走在影子里。拖动灯笼，影子会跟着转');
-    if (findPath(walker.tile, GATE_IN, shade)) return showHint('月门就在前面');
-    if (state.rotated && !state.moved) return showHint('点发蓝的石板，带她走过去');
-    return showHint('一边转灯，一边走向月门');
+    if (!state.rotated && !state.moved) return showHint('小墨只能待在影子里。拖动光球，影子会跟着转');
+    if (findPath(walker.tile, GATE_IN, shade)) return showHint('暗门就在前面');
+    if (state.rotated && !state.moved) return showHint('点有墨点的石板，带它过去');
+    return showHint('一边转动光球，一边走向暗门');
   }
 
   // ---------- walking ----------
   const fx = [];
-  const RING = new THREE.RingGeometry(0.17, 0.23, 48);
+  const RING = new THREE.RingGeometry(0.17, 0.21, 48);
   RING.rotateX(-Math.PI / 2);
   function ripple(id, color) {
-    const m = new THREE.Mesh(RING, new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.95, depthWrite: false }));
+    const m = new THREE.Mesh(RING, new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.9, depthWrite: false }));
     tileWorld(id, m.position);
     m.position.y = 0.02;
     m.renderOrder = 5;
@@ -935,18 +873,18 @@
   function walkTo(id) {
     if (state.won || lampAnim || press && press.dragging) return;
     if (!shade.has(id)) {
-      ripple(id, 0xffb066);
+      ripple(id, 0xd9894a);
       Sound.nope();
-      flashHint('那里有光，她过不去', true);
+      flashHint('那里有光，它过不去', true);
       return;
     }
-    ripple(id, 0xc4d2ff);
+    ripple(id, INK);
     if (walker.step) { walker.pending = id; return; }
     if (id === walker.tile) return;
     const path = findPath(walker.tile, id, shade);
     if (!path) {
       Sound.nope();
-      flashHint('影子没有连到那里，转一转灯笼', true);
+      flashHint('影子没有连到那里，转一转光球', true);
       return;
     }
     walker.path = path.slice(1);
@@ -962,21 +900,25 @@
     const to = walker.path.shift();
     const a = tileWorld(walker.tile, new THREE.Vector3()), b = tileWorld(to, new THREE.Vector3());
     const screenDx = (b.x - a.x) - (b.z - a.z);
-    if (screenDx !== 0) puppetMat.map = screenDx > 0 ? texRight : texLeft;
+    if (screenDx !== 0) look(screenDx > 0 ? 1 : -1);
     walker.step = { to, a, b, t: 0 };
     state.moved = true;
   }
   function updateWalker(dt) {
     const s = walker.step;
+    state.land = Math.max(0, state.land - dt * 5);
     if (s) {
       s.t = Math.min(1, s.t + dt / STEP_TIME);
       char.position.lerpVectors(s.a, s.b, s.t);
-      puppet.position.y = Math.abs(Math.sin(s.t * Math.PI)) * 0.05;
-      puppet.rotation.z = Math.sin(s.t * Math.PI * 2) * 0.07;
+      const hop = Math.sin(s.t * Math.PI);
+      blob.position.y = hop * 0.08;
+      blob.scale.set(1 - 0.06 * hop, 1 + 0.12 * hop, 1 - 0.06 * hop);
       if (s.t >= 1) {
         walker.tile = s.to;
         walker.step = null;
+        state.land = 1;
         Sound.step();
+        stain(s.b.x, s.b.z);
         if (s.to === GATE) { win(); return; }
         nextStep();
         if (!walker.step) Sound.arrive();
@@ -985,14 +927,16 @@
     }
     if (walker.exit) {
       const e = walker.exit;
-      e.t = Math.min(1, e.t + dt / 1.4);
-      char.position.set(1, 0, -1 - 0.9 * e.t);
-      puppetMat.opacity = 1 - e.t;
+      e.t = Math.min(1, e.t + dt / 1.3);
+      char.position.set(1, 0, -1 - 0.7 * e.t);
+      blob.scale.setScalar(Math.max(0.001, 1 - e.t));
       return;
     }
     const sh = state.shiver;
-    puppet.position.y = 0;
-    puppet.rotation.z = sh > 0 ? Math.sin(clock.t * 60) * 0.08 * sh : Math.sin(clock.t * 1.6) * 0.015;
+    blob.position.y = 0;
+    const breathe = Math.sin(clock.t * 2.2) * 0.02;
+    const jiggle = sh > 0 ? Math.sin(clock.t * 55) * 0.08 * sh : 0;
+    blob.scale.set(1 + 0.08 * state.land + jiggle - breathe / 2, 1 - 0.14 * state.land + breathe, 1 + 0.08 * state.land - jiggle - breathe / 2);
   }
 
   // ---------- win / reset ----------
@@ -1002,9 +946,6 @@
     state.winT = 0;
     showHint('');
     Sound.win();
-    puppetMat.map = texRight;
-    puppetMat.transparent = true;
-    puppetMat.alphaTest = 0.02;
     walker.exit = { t: 0 };
     setTimeout(() => {
       if (!state.won) return;
@@ -1018,7 +959,7 @@
     state.winT = -1;
     state.moved = false;
     state.rotated = false;
-    state.shake = state.shiver = 0;
+    state.shake = state.shiver = state.land = 0;
     card.classList.remove('show');
     card.hidden = true;
     lampAnim = null;
@@ -1026,13 +967,11 @@
     walker.path = [];
     walker.pending = null;
     walker.exit = null;
-    puppetMat.opacity = 1;
-    puppetMat.transparent = false;
-    puppetMat.alphaTest = 0.45;
-    puppetMat.map = texLeft;
-    beyondMat.color.setRGB(0.55, 0.55, 0.6);
-    lampLight.intensity = 1.9;
-    hintRing.visible = true;
+    blob.scale.setScalar(1);
+    blob.position.y = 0;
+    beyondMat.color.setRGB(1, 1, 1);
+    clearStains();
+    look(-1);
     let k = START_K, tile = START;
     if (data && Number.isInteger(data.k) && TILES.has(data.tile) && data.tile !== GATE) {
       const s = shadeAt(data.k * STEP);
@@ -1158,8 +1097,8 @@
 
   // ---------- framing ----------
   const P = (x, y, z) => new THREE.Vector3(x, y, z);
-  const FIT_CORE = [P(-1.5, 2.6, -1.5), P(6.5, 0, -0.5), P(-0.5, 0, 6.5), P(6.5, -0.9, 6.5), P(3, 3.2, 0)];
-  const FIT_WIDE = [P(6.5, 2.6, -1.5), P(-1.5, 2.6, 6.5)];
+  const FIT_CORE = [P(-1.5, 2.4, -1.5), P(6.5, 0, -0.5), P(-0.5, 0, 6.5), P(6.5, -0.9, 6.5), P(3, 3.1, 0)];
+  const FIT_WIDE = [P(6.5, 2.4, -1.5), P(-1.5, 2.4, 6.5)];
   function fit() {
     const W = window.innerWidth, H = window.innerHeight;
     renderer.setSize(W, H);
@@ -1202,41 +1141,54 @@
     }
     updateWalker(dt);
 
-    // markers follow the live shadow, so they move while the lantern swings
+    // markers follow the live shadow, so they move while the orb swings
     TILES.forEach((t) => {
       const target = liveShade.has(t.id) ? 1 : 0;
       t.lit += (target - t.lit) * Math.min(1, dt * 10);
-      t.marker.material.opacity = t.lit * (0.42 + 0.08 * Math.sin(clock.t * 2 + t.x + t.z));
+      t.marker.material.opacity = t.lit * (0.34 + 0.06 * Math.sin(clock.t * 2 + t.x + t.z));
     });
     for (let i = fx.length - 1; i >= 0; i--) {
       const f = fx[i];
       f.t = Math.min(1, f.t + dt / 0.7);
       f.m.scale.setScalar(1 + 0.8 * (1 - Math.pow(1 - f.t, 3)));
-      f.m.material.opacity = 0.95 * (1 - f.t);
+      f.m.material.opacity = 0.9 * (1 - f.t);
       if (f.t >= 1) { scene.remove(f.m); f.m.material.dispose(); fx.splice(i, 1); }
+    }
+    for (let i = stains.length - 1; i >= 0; i--) {
+      const s = stains[i];
+      s.t += dt / 6;
+      s.m.material.opacity = 0.45 * Math.max(0, 1 - s.t);
+      if (s.t >= 1) { scene.remove(s.m); s.m.material.dispose(); stains.splice(i, 1); }
+    }
+
+    // blink now and then
+    if (clock.t > state.blinkAt) {
+      const b = clock.t - state.blinkAt;
+      eyes.scale.y = b < 0.12 ? 0.15 : 1;
+      if (b >= 0.12) state.blinkAt = clock.t + 2.5 + Math.random() * 3;
     }
 
     state.shake = Math.max(0, state.shake - dt * 2.5);
     state.shiver = Math.max(0, state.shiver - dt * 1.8);
-    shell.rotation.z = Math.sin(clock.t * 40) * 0.25 * state.shake + Math.sin(clock.t * 1.3) * 0.03;
-    glow.material.opacity = 0.85 + Math.sin(clock.t * 3.1) * 0.06 + Math.sin(clock.t * 7.3) * 0.04;
-    lampLight.intensity = (state.won ? 1.4 : 1.9) + Math.sin(clock.t * 5.3) * 0.04;
+    orb.position.y = Math.sin(clock.t * 40) * 0.04 * state.shake + Math.sin(clock.t * 1.4) * 0.012;
+    glow.material.opacity = 0.8 + Math.sin(clock.t * 2.1) * 0.08;
+    lampLight.intensity = state.won ? 1.2 : 1.45;
     if (hintRing.visible) {
       const p = (clock.t % 1.8) / 1.8;
-      hintRing.scale.setScalar(0.8 + p * 0.7);
-      hintRing.material.opacity = 0.8 * (1 - p);
+      hintRing.scale.setScalar(0.8 + p * 0.9);
+      hintRing.material.opacity = 0.6 * (1 - p);
     }
     for (let i = 0; i < MOTES; i++) {
       const s = moteSeed[i];
-      motePos[i * 3] = s[0] + Math.sin(clock.t * 0.3 + s[3]) * 0.4;
-      motePos[i * 3 + 1] = s[1] + Math.sin(clock.t * 0.5 + s[3] * 2) * 0.25;
-      motePos[i * 3 + 2] = s[2] + Math.cos(clock.t * 0.27 + s[3]) * 0.4;
+      motePos[i * 3] = s[0] + Math.sin(clock.t * 0.25 + s[3]) * 0.4;
+      motePos[i * 3 + 1] = s[1] + Math.sin(clock.t * 0.4 + s[3] * 2) * 0.25;
+      motePos[i * 3 + 2] = s[2] + Math.cos(clock.t * 0.22 + s[3]) * 0.4;
     }
     moteGeo.attributes.position.needsUpdate = true;
     if (state.winT >= 0) {
       state.winT = Math.min(1, state.winT + dt / 1.8);
       const k = state.winT * state.winT * (3 - 2 * state.winT);
-      beyondMat.color.setRGB(0.55 + 0.45 * k, 0.55 + 0.45 * k, 0.6 + 0.4 * k);
+      beyondMat.color.setRGB(1 + 0.5 * k, 1 + 0.5 * k, 1 + 0.8 * k);
     }
   }
 
@@ -1250,27 +1202,6 @@
   if (hot && typeof hot.snapshot === 'function') hot.snapshot(() => ({ k: state.k, tile: walker.tile }));
   if (hot && typeof hot.ready === 'function') hot.ready(start);
   else start((hot && hot.data) || {});
-
-  // ---------- sky ----------
-  function drawStars() {
-    const c = document.getElementById('stars');
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
-    c.width = window.innerWidth * dpr;
-    c.height = window.innerHeight * dpr;
-    c.style.width = window.innerWidth + 'px';
-    c.style.height = window.innerHeight + 'px';
-    const g = c.getContext('2d');
-    let seed = 7;
-    const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
-    const count = Math.round((window.innerWidth * window.innerHeight) / 5200);
-    for (let i = 0; i < count; i++) {
-      const x = rnd() * c.width, y = Math.pow(rnd(), 1.6) * c.height * 0.8;
-      g.fillStyle = 'rgba(239, 230, 210, ' + (0.15 + rnd() * 0.55).toFixed(2) + ')';
-      g.beginPath();
-      g.arc(x, y, (0.4 + rnd() * 0.9) * dpr, 0, Math.PI * 2);
-      g.fill();
-    }
-  }
 })();
 </script>
 </body>
