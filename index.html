@@ -1,33 +1,33 @@
 <!doctype html>
 <html lang="zh-CN">
+<head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>静默之塔</title>
-<meta name="description" content="一个纪念碑谷风格的等距小游戏：转动石桥，带旅人走过一条只在视角里成立的路，抵达塔顶。">
-<meta name="claude:viewport-fit-sides" content="cover">
+<title>影径</title>
+<meta name="description" content="一个关于灯与影的等距小游戏：皮影小人只能走在影子里，转动灯笼，让影子替她铺出一条通往月门的路。">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Marcellus&family=ZCOOL+XiaoWei&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Italiana&family=Ma+Shan+Zheng&family=ZCOOL+XiaoWei&display=swap">
 <style>
   :root {
-    /* Layout: full-bleed dusk sky with the tower as the only subject; HUD pinned to the corners, end card as a centered veil */
-    --sky-1: #ffe2cb;
-    --sky-2: #f6bdb3;
-    --sky-3: #bcaadb;
-    --mist-0: rgba(188, 170, 219, 0);
-    --sun: #fff4e2;
-    --sun-halo: rgba(255, 236, 214, 0.55);
-    --cloud: rgba(255, 247, 243, 0.62);
-    --ink: #463d70;
-    --ink-soft: #776c9c;
-    --glass: rgba(255, 249, 245, 0.55);
-    --glass-strong: rgba(255, 249, 245, 0.85);
-    --line: rgba(70, 61, 112, 0.18);
-    --veil: rgba(255, 241, 234, 0.82);
-    --gold: #d9a443;
-    --font-display: "ZCOOL XiaoWei", "Songti SC", "STSong", "Noto Serif SC", serif;
-    --font-latin: "Marcellus", "Palatino Linotype", "Book Antiqua", Georgia, serif;
-    color-scheme: light;
+    /* Layout: full-bleed night sky with the courtyard as the only subject; HUD in the corners, end card as a centred veil */
+    --night-1: #0c112e;
+    --night-2: #1a1c44;
+    --night-3: #2e2652;
+    --mist-0: rgba(46, 38, 82, 0);
+    --moon: #f4ecd6;
+    --moon-halo: rgba(244, 236, 214, 0.14);
+    --ink: #efe6d2;
+    --ink-soft: rgba(239, 230, 210, 0.62);
+    --ember: #f2a65a;
+    --glass: rgba(22, 24, 58, 0.5);
+    --glass-strong: rgba(40, 42, 88, 0.8);
+    --line: rgba(239, 230, 210, 0.22);
+    --veil: rgba(12, 17, 46, 0.78);
+    --font-brush: "Ma Shan Zheng", "STKaiti", "KaiTi", serif;
+    --font-display: "ZCOOL XiaoWei", "Songti SC", "STSong", serif;
+    --font-latin: "Italiana", "Didot", "Bodoni 72", Georgia, serif;
+    color-scheme: dark;
   }
 
   [hidden] { display: none !important; }
@@ -35,8 +35,8 @@
   body {
     margin: 0;
     overflow: hidden;
-    background: var(--sky-2);
-    background-image: linear-gradient(180deg, var(--sky-1) 0%, var(--sky-2) 52%, var(--sky-3) 100%);
+    background: var(--night-2);
+    background-image: linear-gradient(180deg, var(--night-1) 0%, var(--night-2) 55%, var(--night-3) 100%);
     color: var(--ink);
     font-family: var(--font-display);
     padding-left: max(16px, env(safe-area-inset-left, 0px));
@@ -46,34 +46,27 @@
     -webkit-tap-highlight-color: transparent;
   }
 
-  .sky { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
-  .sun {
-    position: absolute; width: 48vmin; height: 48vmin; left: 56%; top: 9%;
+  #stars { position: fixed; inset: 0; z-index: 0; pointer-events: none; }
+  .moon {
+    position: fixed; z-index: 0; pointer-events: none;
+    width: 20vmin; height: 20vmin; right: 11%; top: 10%;
     border-radius: 50%;
-    background: radial-gradient(circle, var(--sun) 0 28%, var(--sun-halo) 29%, transparent 68%);
+    background: radial-gradient(circle at 44% 42%, var(--moon) 0 57%, transparent 60%);
+    box-shadow: 0 0 80px 24px var(--moon-halo);
   }
-  .cloud {
-    position: absolute; height: 8vmin; border-radius: 999px;
-    background: var(--cloud); filter: blur(7px);
-    animation: drift 150s linear infinite alternate;
-  }
-  .c1 { width: 40vmin; top: 24%; left: -10%; }
-  .c2 { width: 28vmin; top: 47%; left: 72%; animation-duration: 190s; animation-direction: alternate-reverse; }
-  .c3 { width: 58vmin; top: 66%; left: 6%; opacity: 0.75; animation-duration: 220s; }
-  @keyframes drift { to { transform: translateX(16vw); } }
 
   #stage { position: fixed; inset: 0; z-index: 1; }
   #stage canvas { display: block; touch-action: none; outline: none; }
 
   .mist {
-    position: fixed; left: 0; right: 0; bottom: 0; height: 26vh; z-index: 2; pointer-events: none;
-    background: linear-gradient(to bottom, var(--mist-0) 0%, var(--sky-3) 86%);
+    position: fixed; left: 0; right: 0; bottom: 0; height: 30vh; z-index: 2; pointer-events: none;
+    background: linear-gradient(to bottom, var(--mist-0) 0%, var(--night-3) 88%);
   }
 
   .hud {
     position: fixed; top: 0; left: 0; right: 0; z-index: 3;
     display: flex; justify-content: space-between; align-items: flex-start; gap: 16px;
-    padding-top: calc(env(safe-area-inset-top, 0px) + 18px);
+    padding-top: calc(env(safe-area-inset-top, 0px) + 16px);
     padding-left: max(20px, env(safe-area-inset-left, 0px));
     padding-right: max(20px, env(safe-area-inset-right, 0px));
     pointer-events: none;
@@ -81,15 +74,14 @@
   .hud > * { pointer-events: auto; }
   .title h1 {
     margin: 0;
-    font: 400 clamp(24px, 3.2vw, 32px)/1.1 var(--font-display);
-    letter-spacing: 0.3em;
+    font: 400 clamp(34px, 4.2vw, 44px)/1 var(--font-brush);
+    letter-spacing: 0.12em;
     color: var(--ink);
-    text-wrap: balance;
   }
   .title p {
     margin: 8px 0 0;
-    font: 400 11px/1.4 var(--font-latin);
-    letter-spacing: 0.36em;
+    font: 400 12px/1.4 var(--font-latin);
+    letter-spacing: 0.34em;
     text-transform: uppercase;
     color: var(--ink-soft);
   }
@@ -107,7 +99,7 @@
     transition: background-color 0.2s, transform 0.2s;
   }
   .icon-btn:hover { background: var(--glass-strong); transform: translateY(-1px); }
-  .icon-btn:focus-visible, .text-btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+  .icon-btn:focus-visible, .text-btn:focus-visible { outline: 2px solid var(--ember); outline-offset: 3px; }
   .icon-btn svg { width: 18px; height: 18px; }
   .icon-btn .off { display: none; }
   .icon-btn[aria-pressed="false"] .on { display: none; }
@@ -120,39 +112,41 @@
     padding-right: max(16px, env(safe-area-inset-right, 0px));
     text-align: center;
     font: 400 16px/1.5 var(--font-display);
-    letter-spacing: 0.24em;
+    letter-spacing: 0.2em;
     color: var(--ink);
+    text-shadow: 0 1px 12px rgba(12, 17, 46, 0.9);
     opacity: 0;
     transform: translateY(6px);
-    transition: opacity 0.5s ease, transform 0.5s ease;
+    transition: opacity 0.45s ease, transform 0.45s ease;
     pointer-events: none;
   }
-  .hint.show { opacity: 0.92; transform: none; }
+  .hint.show { opacity: 0.94; transform: none; }
+  .hint.warm { color: var(--ember); }
 
   .card {
     position: fixed; inset: 0; z-index: 4;
     display: grid; place-items: center;
     padding-left: max(16px, env(safe-area-inset-left, 0px));
     padding-right: max(16px, env(safe-area-inset-right, 0px));
-    background: radial-gradient(ellipse at 50% 45%, var(--veil) 0%, var(--veil) 28%, transparent 72%);
+    background: radial-gradient(ellipse at 50% 46%, var(--veil) 0%, var(--veil) 30%, transparent 74%);
     opacity: 0;
-    transition: opacity 0.9s ease;
+    transition: opacity 1s ease;
   }
   .card.show { opacity: 1; }
   .card-inner { display: grid; justify-items: center; gap: 14px; text-align: center; max-width: 30ch; }
   .card .eyebrow {
     margin: 0;
-    font: 400 11px/1.4 var(--font-latin);
+    font: 400 12px/1.4 var(--font-latin);
     letter-spacing: 0.4em;
     text-transform: uppercase;
     color: var(--ink-soft);
   }
   .card h2 {
     margin: 0;
-    font: 400 clamp(40px, 8vw, 60px)/1 var(--font-display);
-    letter-spacing: 0.3em;
-    padding-left: 0.3em;
-    color: var(--ink);
+    font: 400 clamp(60px, 11vw, 84px)/1 var(--font-brush);
+    letter-spacing: 0.16em;
+    padding-left: 0.16em;
+    color: var(--moon);
   }
   .card .line { margin: 0; font-size: 16px; line-height: 1.8; letter-spacing: 0.12em; color: var(--ink); }
   .text-btn {
@@ -161,38 +155,33 @@
     letter-spacing: 0.3em;
     padding: 13px 22px 13px 26px;
     border-radius: 999px;
-    border: 1px solid var(--ink);
+    border: 1px solid var(--ink-soft);
     background: transparent;
     color: var(--ink);
     cursor: pointer;
     transition: background-color 0.2s, color 0.2s;
   }
-  .text-btn:hover { background: var(--ink); color: var(--sky-1); }
+  .text-btn:hover { background: var(--ink); color: var(--night-1); }
 
   @media (max-width: 480px) {
-    .title h1 { letter-spacing: 0.22em; }
-    .hint { font-size: 15px; letter-spacing: 0.16em; }
+    .hint { font-size: 15px; letter-spacing: 0.12em; }
   }
   @media (prefers-reduced-motion: reduce) {
-    .cloud { animation: none; }
     .hint, .card { transition: none; }
   }
 </style>
+</head>
+<body>
 
-<div class="sky" aria-hidden="true">
-  <div class="sun"></div>
-  <div class="cloud c1"></div>
-  <div class="cloud c2"></div>
-  <div class="cloud c3"></div>
-</div>
-
+<canvas id="stars" aria-hidden="true"></canvas>
+<div class="moon" aria-hidden="true"></div>
 <div id="stage"></div>
 <div class="mist" aria-hidden="true"></div>
 
 <header class="hud">
   <div class="title">
-    <h1>静默之塔</h1>
-    <p>The Silent Spire · I</p>
+    <h1>影径</h1>
+    <p>The Shadow Path · I</p>
   </div>
   <div class="actions">
     <button id="btn-sound" class="icon-btn" type="button" aria-pressed="true" aria-label="声音">
@@ -210,8 +199,8 @@
 <section id="card" class="card" hidden aria-live="polite">
   <div class="card-inner">
     <p class="eyebrow">Chapter I · Complete</p>
-    <h2>门开了</h2>
-    <p class="line">她走过了一条本不存在的路，<br>抵达了塔顶。</p>
+    <h2>月下</h2>
+    <p class="line">她跟着影子穿过庭院，<br>走进了月光里。</p>
     <button id="btn-again" class="text-btn" type="button">再走一次</button>
   </div>
 </section>
@@ -222,344 +211,473 @@
   'use strict';
 
   const hintEl = document.getElementById('hint');
-  if (!window.THREE) {
-    hintEl.textContent = '3D 引擎没能加载，请检查网络后刷新页面';
+  function fail(msg) {
+    hintEl.textContent = msg;
     hintEl.classList.add('show');
-    return;
   }
+  drawStars();
+  window.addEventListener('resize', drawStars);
+  if (!window.THREE) return fail('3D 引擎没能加载，请检查网络后刷新页面');
 
-  const HALF_PI = Math.PI / 2;
-  const ISO = new THREE.Vector3(1, 1, 1).normalize();
-  const SCREEN_R = new THREE.Vector3(1, 0, -1).normalize();
-  const SCREEN_U = new THREE.Vector3(-1, 2, -1).normalize();
-  const STEP_TIME = 0.42;
-  const SLAB = 0.03;
+  // ---------- level ----------
+  const TAU = Math.PI * 2;
+  const STEP = Math.PI / 4;             // the lantern rests every 45 degrees
+  const SWEEP = Math.PI / 180;          // safety check resolution while it moves
+  const N = 7;
+  const POST = { x: 3, z: 3 };
+  const ARM_R = 1.45;
+  const LAMP_Y = 2.1;
+  const START = '6,6';
+  const START_K = 5;
+  const GATE = '1,-1';
+  const GATE_IN = '1,0';
+  const STEP_TIME = 0.4;
 
-  // ---------- renderer, camera, light ----------
-  const stage = document.getElementById('stage');
-  let renderer;
-  try {
-    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-  } catch (err) {
-    hintEl.textContent = '这个浏览器没有开启 WebGL，无法显示这座塔';
-    hintEl.classList.add('show');
-    return;
-  }
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-  renderer.setClearColor(0x000000, 0);
-  const canvas = renderer.domElement;
-  canvas.setAttribute('role', 'img');
-  canvas.setAttribute('aria-label', '等距视角的高塔。点击石板让旅人行走，拖动或点击转轮旋转石桥，按 R 键也可以旋转。');
-  stage.appendChild(canvas);
+  // Every occluder is an axis-aligned box. The same boxes cast the rendered
+  // shadow and decide which tiles she may stand on, so what you see is the rule.
+  const PILLARS = [
+    { x: 3, z: 0, h: 2.7 },
+    { x: 1, z: 5, h: 2.7 },
+    { x: 3, z: 4, h: 1.2 },
+  ];
+  const WALLS = [                       // low screen walls running along z
+    { x: 2, z0: 1, len: 3, h: 1.0 },
+    { x: 4, z0: 2, len: 3, h: 1.0 },
+  ];
+  const OCCLUDERS = [];
+  PILLARS.forEach((p) => OCCLUDERS.push({ lo: [p.x - 0.35, 0, p.z - 0.35], hi: [p.x + 0.35, p.h, p.z + 0.35] }));
+  WALLS.forEach((w) => OCCLUDERS.push({ lo: [w.x - 0.18, 0, w.z0 - 0.5], hi: [w.x + 0.18, w.h, w.z0 + w.len - 0.5] }));
 
-  const scene = new THREE.Scene();
-  const camera = new THREE.OrthographicCamera(-5, 5, 5, -5, 0.1, 500);
-  camera.position.copy(ISO).multiplyScalar(150);
-  camera.lookAt(0, 0, 0);
-
-  scene.add(new THREE.AmbientLight(0xfff2ee, 0.5));
-  const keyLight = new THREE.DirectionalLight(0xffffff, 0.6);
-  keyLight.position.set(0.15, 0.85, 0.5);
-  scene.add(keyLight);
-  const warmLight = new THREE.DirectionalLight(0xffb4a2, 0.13);
-  warmLight.position.set(1, 0.1, -0.2);
-  scene.add(warmLight);
-
-  // ---------- materials ----------
-  const lam = (c, o) => new THREE.MeshLambertMaterial(Object.assign({ color: c }, o || {}));
-  const MAT = {
-    stone: lam(0xf4e9f2),
-    stoneDeep: lam(0xe4d3e8),
-    path: lam(0xfff3e4),
-    bridge: lam(0x9fd3c7),
-    bridgePath: lam(0xdcf3eb),
-    band: lam(0x5f9f9e),
-    indigo: lam(0x4b4682),
-    roof: lam(0x5a5596),
-    gold: lam(0xf2c76b, { emissive: 0x4a3200 }),
-    far: lam(0xf1cbd5, { emissive: 0x2d1d26 }),
-    farDeep: lam(0xd9b3cc, { emissive: 0x2d1d26 }),
-    robe: lam(0xffffff, { emissive: 0x403640 }),
-    scarf: lam(0xf0857a, { emissive: 0x2a0a08 }),
-  };
-  const flat = (c) => new THREE.MeshBasicMaterial({ color: c, side: THREE.DoubleSide, polygonOffset: true, polygonOffsetFactor: -1, polygonOffsetUnits: -1 });
-  const BASIC = { window: flat(0x8a7fb3), frame: flat(0xd9c9e3), door: flat(0x3f3a6e) };
-
-  // ---------- geometry helpers ----------
-  const BOX = new THREE.BoxGeometry(1, 1, 1);
-  const flatNormals = (g) => { const n = g.toNonIndexed(); n.computeVertexNormals(); return n; };
-  const PYR_DOWN = (() => { const g = new THREE.ConeGeometry(Math.SQRT1_2, 1, 4); g.rotateY(Math.PI / 4); g.rotateX(Math.PI); return flatNormals(g); })();
-  const PYR_UP = (() => { const g = new THREE.ConeGeometry(Math.SQRT1_2, 1, 4); g.rotateY(Math.PI / 4); return flatNormals(g); })();
-  const CYL = (r, h, seg) => new THREE.CylinderGeometry(r, r, h, seg || 28);
-
-  const pickables = [];
-  function mesh(geo, mat, parent, pick) {
-    const m = new THREE.Mesh(geo, mat);
-    (parent || scene).add(m);
-    if (pick !== false) pickables.push(m);
-    return m;
-  }
-  function box(x, y, z, mat, sx, sy, sz, parent) {
-    const m = mesh(BOX, mat, parent);
-    m.position.set(x, y, z);
-    m.scale.set(sx || 1, sy || 1, sz || 1);
-    return m;
-  }
-  function column(x, z, top, bottom, mat) {
-    return box(x, (top + bottom) / 2, z, mat || MAT.stone, 1, top - bottom + 1, 1);
-  }
-  function pyramid(geo, x, yBase, z, w, h, d, mat, pick) {
-    const m = mesh(geo, mat || MAT.stoneDeep, scene, pick);
-    m.scale.set(w, h, d);
-    m.position.set(x, geo === PYR_DOWN ? yBase - h / 2 : yBase + h / 2, z);
-    return m;
-  }
-  function archShape(w, h) {
-    const r = w / 2, s = new THREE.Shape();
-    s.moveTo(-r, 0);
-    s.lineTo(-r, h - r);
-    s.absarc(0, h - r, r, Math.PI, 0, true);
-    s.lineTo(r, 0);
-    s.closePath();
-    return new THREE.ShapeGeometry(s, 10);
-  }
-  const ARCH_WINDOW = archShape(0.24, 0.4);
-  // a window sits on the visible +z or +x face of the block centred at (x, z); y is its sill height
-  function windowOn(x, y, z, face, geo, mat) {
-    const m = mesh(geo || ARCH_WINDOW, mat || BASIC.window);
-    if (face === 'x') { m.position.set(x + 0.502, y, z); m.rotation.y = HALF_PI; }
-    else m.position.set(x, y, z + 0.502);
-    return m;
-  }
-
-  // ---------- walkable nodes ----------
-  const nodes = {};
-  function addNode(id, local, parent, block, extra) {
-    nodes[id] = Object.assign({ id, local, parent: parent || scene, block }, extra || {});
-  }
-  function tile(id, x, y, z, opt) {
-    opt = opt || {};
-    const parent = opt.parent || scene;
-    const b = box(x, y, z, opt.mat || MAT.stone, 1, 1, 1, parent);
-    const s = box(x, y + 0.5 + SLAB / 2, z, opt.path || MAT.path, 0.82, SLAB, 0.82, parent);
-    b.userData.node = s.userData.node = id;
-    addNode(id, new THREE.Vector3(x, y + 0.5 + SLAB, z), parent, new THREE.Vector3(x, y, z));
-  }
-  // a flight of four steps that climbs one block toward -z
-  function stair(id, x, y, z) {
-    for (let i = 0; i < 4; i++) {
-      const h = (i + 1) * 0.25, zc = z + 0.5 - (i + 0.5) * 0.25;
-      box(x, y - 0.5 + h / 2, zc, MAT.stone, 1, h, 0.25).userData.node = id;
-      box(x, y - 0.5 + h + SLAB / 2, zc, MAT.path, 0.82, SLAB, 0.19).userData.node = id;
+  const key = (x, z) => x + ',' + z;
+  const BLOCKED = new Set([key(POST.x, POST.z)]);
+  PILLARS.forEach((p) => BLOCKED.add(key(p.x, p.z)));
+  WALLS.forEach((w) => { for (let i = 0; i < w.len; i++) BLOCKED.add(key(w.x, w.z0 + i)); });
+  const TILES = new Map();
+  for (let x = 0; x < N; x++) {
+    for (let z = 0; z < N; z++) {
+      if (!BLOCKED.has(key(x, z))) TILES.set(key(x, z), { id: key(x, z), x, z });
     }
-    addNode(id, new THREE.Vector3(x, y + 0.14, z), scene, new THREE.Vector3(x, y, z));
   }
+  TILES.set(GATE, { id: GATE, x: 1, z: -1, gate: true });
 
-  // ---------- the level ----------
-  // Start terrace (near the viewer)
-  tile('a1', 2, 0, 0);
-  tile('a2', 1, 0, 0);
-  tile('a3', 0, 0, 0);
-  box(1, -1, 0, MAT.stone, 3, 1, 1);
-  pyramid(PYR_DOWN, 1, -1.5, 0, 3, 2.6, 1);
-  [0, 1, 2].forEach((x) => windowOn(x, -1.36, 0, 'z'));
-  windowOn(2, -1.36, 0, 'x');
-
-  // The rotating bridge: three blocks on a shaft, turned by a capstan on the middle block
-  const shaft = mesh(CYL(0.3, 14), MAT.stoneDeep);
-  shaft.position.set(0, -0.6 - 7, -2);
-  mesh(CYL(0.46, 0.1), MAT.indigo).position.set(0, -0.55, -2);
-
-  const rotator = new THREE.Group();
-  rotator.position.set(0, 0, -2);
-  scene.add(rotator);
-  box(0, 0, 0, MAT.bridge, 1, 1, 1, rotator);
-  tile('b1', 0, 0, 1, { parent: rotator, mat: MAT.bridge, path: MAT.bridgePath });
-  tile('b2', 0, 0, -1, { parent: rotator, mat: MAT.bridge, path: MAT.bridgePath });
-  box(0, -0.44, 0, MAT.band, 1.03, 0.07, 3.03, rotator);
-
-  const capstan = new THREE.Group();
-  capstan.position.y = 0.5;
-  rotator.add(capstan);
-  mesh(CYL(0.32, 0.07), MAT.indigo, capstan).position.y = 0.035;
-  mesh(CYL(0.065, 0.38), MAT.indigo, capstan).position.y = 0.26;
-  mesh(CYL(0.12, 0.09), MAT.gold, capstan).position.y = 0.42;
-  box(0, 0.42, 0, MAT.indigo, 0.92, 0.055, 0.055, capstan);
-  const KNOB = new THREE.SphereGeometry(0.075, 16, 12);
-  mesh(KNOB, MAT.gold, capstan).position.set(0.47, 0.42, 0);
-  mesh(KNOB, MAT.gold, capstan).position.set(-0.47, 0.42, 0);
-  rotator.traverse((o) => { if (o.isMesh) o.userData.rot = true; });
-
-  const hintRing = new THREE.Mesh(
-    new THREE.TorusGeometry(0.52, 0.018, 8, 64),
-    new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.8, depthWrite: false })
-  );
-  hintRing.rotation.x = HALF_PI;
-  hintRing.position.y = 0.92;
-  rotator.add(hintRing);
-
-  // The far tower. t1 sits one block lower and one block deeper than it looks:
-  // in this projection (x, y, z) and (x+1, y+1, z+1) land on the same pixel.
-  tile('t1', -3, -1, -3);
-  tile('t2', -4, -1, -3);
-  column(-3, -3, -2, -15);
-  column(-4, -3, -2, -15);
-  stair('s1', -4, 0, -4);
-  stair('s2', -4, 1, -5);
-  column(-4, -4, -1, -15);
-  column(-4, -5, 0, -15);
-  tile('g', -4, 1, -6);
-  column(-4, -6, 0, -15);
-  // wall along the far side of the stair
-  column(-5, -3, 0, -15);
-  column(-5, -4, 1, -15);
-  column(-5, -5, 2, -15);
-  column(-5, -6, 2, -15);
-  // gate house
-  column(-4, -7, 3, -15);
-  column(-5, -7, 2, -15);
-  column(-3, -7, 2, -15);
-  pyramid(PYR_UP, -5, 2.5, -7, 1.02, 0.72, 1.02, MAT.roof);
-  pyramid(PYR_UP, -3, 2.5, -7, 1.02, 0.72, 1.02, MAT.roof);
-  mesh(CYL(0.4, 0.22), MAT.stone).position.set(-4, 3.61, -7);
-  mesh(new THREE.SphereGeometry(0.4, 28, 14, 0, Math.PI * 2, 0, HALF_PI), MAT.roof).position.set(-4, 3.72, -7);
-  mesh(CYL(0.022, 0.34), MAT.gold).position.set(-4, 4.26, -7);
-  mesh(new THREE.SphereGeometry(0.06, 14, 10), MAT.gold).position.set(-4, 4.45, -7);
-  windowOn(-4, 1.5, -7, 'z', archShape(0.58, 0.94), BASIC.frame);
-  const door = windowOn(-4, 1.5, -7, 'z', archShape(0.42, 0.8), BASIC.door);
-  door.position.z += 0.004;
-  windowOn(-3, 1.72, -7, 'z');
-  windowOn(-3, 1.72, -7, 'x');
-  windowOn(-5, 1.62, -6, 'x');
-  windowOn(-5, 1.25, -5, 'x');
-  windowOn(-3, -2.4, -3, 'z');
-  windowOn(-3, -2.4, -3, 'x');
-  windowOn(-3, -4.6, -3, 'z');
-  windowOn(-4, -2.4, -3, 'z');
-  windowOn(-4, -4.6, -3, 'z');
-
-  // the relic that waits at the gate
-  const relic = mesh(new THREE.OctahedronGeometry(0.15), MAT.gold, scene, false);
-  relic.position.set(-4, 2.3, -6);
-
-  // distant islets, only seen on wide screens
-  function islet(x, y, z, s) {
-    const top = mesh(BOX, MAT.far, scene, false);
-    top.scale.set(2 * s, 0.5 * s, 2 * s);
-    top.position.set(x, y, z);
-    pyramid(PYR_DOWN, x, y - 0.25 * s, z, 2 * s, 1.9 * s, 2 * s, MAT.far, false);
-    const t = mesh(CYL(0.28 * s, 1.1 * s), MAT.far, scene, false);
-    t.position.set(x, y + 0.25 * s + 0.55 * s, z);
-    pyramid(PYR_UP, x, y + 0.25 * s + 1.1 * s, z, 0.62 * s, 0.5 * s, 0.62 * s, MAT.farDeep, false);
-  }
-  islet(8, -1.2, -5, 1);
-  islet(-9, 1.8, 1, 0.8);
-
-  // ---------- the traveller ----------
-  const char = new THREE.Group();
-  scene.add(char);
-  const body = new THREE.Group();
-  char.add(body);
-  const robe = new THREE.Mesh(new THREE.ConeGeometry(0.15, 0.42, 28), MAT.robe);
-  robe.position.y = 0.21;
-  const scarf = new THREE.Mesh(new THREE.TorusGeometry(0.075, 0.028, 10, 28), MAT.scarf);
-  scarf.rotation.x = HALF_PI;
-  scarf.position.y = 0.39;
-  const tail = new THREE.Mesh(BOX, MAT.scarf);
-  tail.scale.set(0.05, 0.17, 0.03);
-  tail.position.set(0.03, 0.31, -0.1);
-  tail.rotation.x = -0.4;
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.085, 20, 14), MAT.robe);
-  head.position.y = 0.48;
-  const hat = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.3, 24), MAT.robe);
-  hat.position.y = 0.68;
-  body.add(robe, scarf, tail, head, hat);
-  const shadow = new THREE.Mesh(
-    new THREE.CircleGeometry(0.17, 24),
-    new THREE.MeshBasicMaterial({ color: 0x3b2f5a, transparent: true, opacity: 0.16, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 })
-  );
-  shadow.rotation.x = -HALF_PI;
-  shadow.position.y = 0.004;
-  char.add(shadow);
-
-  // While crossing an illusion seam the traveller is drawn above everything,
-  // because her true depth jumps by a whole block halfway through the step.
-  const LAYERS = [[shadow, 20], [robe, 21], [tail, 22], [scarf, 23], [head, 24], [hat, 25]];
-  function setOverlay(on) {
-    [MAT.robe, MAT.scarf, shadow.material].forEach((m) => { m.depthTest = !on; });
-    LAYERS.forEach(([o, order]) => { o.renderOrder = on ? order : 0; });
-  }
-
-  // ---------- graph ----------
-  const STATIC_LINKS = [['a1', 'a2'], ['a2', 'a3'], ['t1', 't2'], ['t2', 's1'], ['s1', 's2'], ['s2', 'g']];
-  const BRIDGE = ['b1', 'b2'];
-  const DOCKS = ['a3', 't1'];
-  let graph = new Map();
-
-  function nodePos(id, out) {
-    const n = nodes[id];
-    out = out || new THREE.Vector3();
-    out.copy(n.local);
-    if (n.parent !== scene) n.parent.localToWorld(out);
+  function lampAt(theta, out) {
+    out[0] = POST.x + ARM_R * Math.cos(theta);
+    out[1] = LAMP_Y;
+    out[2] = POST.z + ARM_R * Math.sin(theta);
     return out;
   }
-  function nodeBlock(id) {
-    const n = nodes[id];
-    const v = n.block.clone();
-    if (n.parent !== scene) n.parent.localToWorld(v);
-    return v.set(Math.round(v.x), Math.round(v.y), Math.round(v.z));
+  function segHitsBox(p, q, lo, hi) {
+    let t0 = 0, t1 = 1;
+    for (let a = 0; a < 3; a++) {
+      const d = q[a] - p[a];
+      if (Math.abs(d) < 1e-9) {
+        if (p[a] < lo[a] || p[a] > hi[a]) return false;
+        continue;
+      }
+      let ta = (lo[a] - p[a]) / d, tb = (hi[a] - p[a]) / d;
+      if (ta > tb) { const s = ta; ta = tb; tb = s; }
+      if (ta > t0) t0 = ta;
+      if (tb < t1) t1 = tb;
+      if (t0 > t1) return false;
+    }
+    return true;
   }
-  function link(a, b, illusion) {
-    graph.get(a).push({ to: b, illusion });
-    graph.get(b).push({ to: a, illusion });
+  // a tile is shadow when at least 3 of its 5 sample points cannot see the lantern
+  const SAMPLES = [[0, 0], [0.25, 0.25], [-0.25, 0.25], [0.25, -0.25], [-0.25, -0.25]];
+  const _p = [0, 0.05, 0], _q = [0, 0, 0];
+  function inShadow(tile, theta) {
+    if (tile.gate) return true;
+    lampAt(theta, _q);
+    let dark = 0;
+    for (const s of SAMPLES) {
+      _p[0] = tile.x + s[0];
+      _p[2] = tile.z + s[1];
+      for (const o of OCCLUDERS) {
+        if (segHitsBox(_p, _q, o.lo, o.hi)) { dark++; break; }
+      }
+    }
+    return dark >= 3;
   }
-  // A bridge end meets a dock when they look adjacent on screen:
-  // after sliding the dock along (1,1,1) to the bridge's height, they are one step apart.
-  function buildGraph() {
-    graph = new Map();
-    Object.keys(nodes).forEach((id) => graph.set(id, []));
-    STATIC_LINKS.forEach(([a, b]) => link(a, b, false));
-    rotator.updateMatrixWorld(true);
-    BRIDGE.forEach((b) => {
-      const pb = nodeBlock(b);
-      DOCKS.forEach((d) => {
-        const pd = nodes[d].block;
-        const k = pd.y - pb.y;
-        const dx = pd.x - k - pb.x, dz = pd.z - k - pb.z;
-        if (Math.abs(dx) + Math.abs(dz) === 1) link(b, d, k !== 0);
-      });
-    });
-  }
-  function dockLinks() {
+  function shadeAt(theta) {
     const out = new Set();
-    BRIDGE.forEach((b) => (graph.get(b) || []).forEach((e) => out.add(b + '|' + e.to)));
+    TILES.forEach((t) => { if (inShadow(t, theta)) out.add(t.id); });
     return out;
   }
-  function findPath(from, to) {
+  function neighbours(id) {
+    const t = TILES.get(id), out = [];
+    [[1, 0], [-1, 0], [0, 1], [0, -1]].forEach(([dx, dz]) => {
+      const n = TILES.get(key(t.x + dx, t.z + dz));
+      if (n) out.push(n.id);
+    });
+    return out;
+  }
+  function findPath(from, to, shade) {
     if (from === to) return [from];
     const prev = new Map([[from, null]]);
     const queue = [from];
     while (queue.length) {
       const cur = queue.shift();
-      for (const e of graph.get(cur)) {
-        if (prev.has(e.to)) continue;
-        prev.set(e.to, cur);
-        if (e.to === to) {
+      for (const n of neighbours(cur)) {
+        if (!shade.has(n) || prev.has(n)) continue;
+        prev.set(n, cur);
+        if (n === to) {
           const path = [to];
           for (let p = cur; p; p = prev.get(p)) path.unshift(p);
           return path;
         }
-        queue.push(e.to);
+        queue.push(n);
       }
     }
     return null;
   }
 
+  // ---------- renderer ----------
+  const stage = document.getElementById('stage');
+  let renderer;
+  try {
+    renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  } catch (err) {
+    return fail('这个浏览器没有开启 WebGL，无法显示庭院');
+  }
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.setClearColor(0x000000, 0);
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.shadowMap.autoUpdate = false;
+  const canvas = renderer.domElement;
+  canvas.setAttribute('role', 'img');
+  canvas.setAttribute('aria-label', '夜色中的庭院。皮影小人只能走在影子里，拖动或点击灯笼改变影子，点击发蓝的石板让她走过去。键盘按 R 转动灯笼。');
+  stage.appendChild(canvas);
+
+  const ISO = new THREE.Vector3(1, 1, 1).normalize();
+  const SCREEN_R = new THREE.Vector3(1, 0, -1).normalize();
+  const SCREEN_U = new THREE.Vector3(-1, 2, -1).normalize();
+  const scene = new THREE.Scene();
+  const camera = new THREE.OrthographicCamera(-5, 5, 5, -5, 0.1, 500);
+  camera.position.copy(ISO).multiplyScalar(150);
+  camera.lookAt(0, 0, 0);
+
+  scene.add(new THREE.HemisphereLight(0x6c7cd0, 0x1a1530, 0.55));
+  const moonLight = new THREE.DirectionalLight(0xa9b8ff, 0.3);
+  moonLight.position.set(-0.4, 1, 0.55);
+  scene.add(moonLight);
+
+  // ---------- materials ----------
+  const phong = (c, o) => new THREE.MeshPhongMaterial(Object.assign({ color: c, specular: 0x000000, shininess: 4 }, o || {}));
+  const MAT = {
+    floor: [phong(0xb4aca4), phong(0xaba39c), phong(0xbbb3aa)],
+    plinth: phong(0x3a3556),
+    plinthDeep: phong(0x2b2747),
+    plaster: phong(0xdcd3c3),
+    cap: phong(0x3b3d54),
+    stone: phong(0x9f99ab),
+    stoneDark: phong(0x6c6680),
+    lacquer: phong(0x93302a),
+    wood: phong(0x3a2a24),
+    gold: phong(0xe0aa52, { emissive: 0x3a2200 }),
+    lantern: phong(0xd8402d, { emissive: 0xc8401f }),
+  };
+
+  // ---------- builders ----------
+  const BOX = new THREE.BoxGeometry(1, 1, 1);
+  const pickables = [];
+  function mesh(geo, mat, parent, opt) {
+    opt = opt || {};
+    const m = new THREE.Mesh(geo, mat);
+    m.castShadow = opt.cast !== false;
+    m.receiveShadow = opt.receive !== false;
+    (parent || scene).add(m);
+    if (opt.pick !== false) pickables.push(m);
+    return m;
+  }
+  function box(x, y, z, sx, sy, sz, mat, parent, opt) {
+    const m = mesh(BOX, mat, parent, opt);
+    m.position.set(x, y, z);
+    m.scale.set(sx, sy, sz);
+    return m;
+  }
+  const flatNormals = (g) => { const n = g.toNonIndexed(); n.computeVertexNormals(); return n; };
+  const PYR_UP = (() => { const g = new THREE.ConeGeometry(Math.SQRT1_2, 1, 4); g.rotateY(Math.PI / 4); return flatNormals(g); })();
+  const PYR_DOWN = (() => { const g = new THREE.ConeGeometry(Math.SQRT1_2, 1, 4); g.rotateY(Math.PI / 4); g.rotateX(Math.PI); return flatNormals(g); })();
+  const CYL = (r, h, seg) => new THREE.CylinderGeometry(r, r, h, seg || 20);
+  function canvasTexture(w, h, draw) {
+    const c = document.createElement('canvas');
+    c.width = w;
+    c.height = h;
+    draw(c.getContext('2d'), w, h);
+    return new THREE.CanvasTexture(c);
+  }
+  const radial = (inner, outer) => canvasTexture(128, 128, (g) => {
+    const grd = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+    grd.addColorStop(0, inner);
+    grd.addColorStop(1, outer);
+    g.fillStyle = grd;
+    g.fillRect(0, 0, 128, 128);
+  });
+
+  // ---------- courtyard ----------
+  for (let x = 0; x < N; x++) {
+    for (let z = 0; z < N; z++) {
+      const slab = box(x, -0.12, z, 0.95, 0.24, 0.95, MAT.floor[(x * 7 + z * 3) % 3]);
+      if (TILES.has(key(x, z))) slab.userData.tile = key(x, z);
+    }
+  }
+  box(1, -0.12, -1, 0.95, 0.24, 1, MAT.floor[0]).userData.tile = GATE;
+  box(2.5, -0.55, 2.5, 8, 0.62, 8, MAT.plinth, scene, { cast: false });
+  box(2.5, -1.1, 2.5, 7, 0.5, 7, MAT.plinthDeep, scene, { cast: false, pick: false });
+  box(2.5, -1.55, 2.5, 5.6, 0.4, 5.6, MAT.plinthDeep, scene, { cast: false, pick: false });
+  const keel = mesh(PYR_DOWN, MAT.plinthDeep, scene, { cast: false, pick: false });
+  keel.scale.set(4.6, 2.6, 4.6);
+  keel.position.set(2.5, -1.75 - 1.3, 2.5);
+
+  // back wall with the moon gate cut through it
+  const WALL_H = 2.3;
+  const backShape = new THREE.Shape();
+  {
+    const cx = 1, cy = 0.62, r = 0.85;
+    const a = Math.asin(cy / r), half = Math.sqrt(r * r - cy * cy);
+    backShape.moveTo(-1.5, 0);
+    backShape.lineTo(cx - half, 0);
+    backShape.absarc(cx, cy, r, Math.PI + a, -a, true);
+    backShape.lineTo(6.5, 0);
+    backShape.lineTo(6.5, WALL_H);
+    backShape.lineTo(-1.5, WALL_H);
+    backShape.closePath();
+  }
+  const backWall = mesh(new THREE.ExtrudeGeometry(backShape, { depth: 1, bevelEnabled: false, curveSegments: 48 }), MAT.plaster);
+  backWall.position.z = -1.5;
+  box(2.5, WALL_H + 0.07, -1, 8.2, 0.14, 1.24, MAT.cap);
+  box(2.5, WALL_H + 0.19, -1, 8.2, 0.1, 0.34, MAT.cap);
+
+  // moonlight beyond the gate
+  const beyondMat = new THREE.MeshBasicMaterial({ map: radial('#e8edff', '#2b3570') });
+  const beyond = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 2.6), beyondMat);
+  beyond.position.set(1, 0.7, -1.56);
+  scene.add(beyond);
+
+  // left wall with a lattice window
+  const leftShape = new THREE.Shape();
+  leftShape.moveTo(-1.5, 0);
+  leftShape.lineTo(6.5, 0);
+  leftShape.lineTo(6.5, WALL_H);
+  leftShape.lineTo(-1.5, WALL_H);
+  leftShape.closePath();
+  {
+    const hole = new THREE.Path();
+    for (let i = 0; i < 8; i++) {
+      const a = Math.PI / 8 + i * (Math.PI / 4);
+      const px = 2.5 + Math.cos(a) * 0.6, py = 1.25 + Math.sin(a) * 0.6;
+      if (i === 0) hole.moveTo(px, py); else hole.lineTo(px, py);
+    }
+    hole.closePath();
+    leftShape.holes.push(hole);
+  }
+  const leftWall = mesh(new THREE.ExtrudeGeometry(leftShape, { depth: 1, bevelEnabled: false }), MAT.plaster);
+  leftWall.rotation.y = -Math.PI / 2;
+  leftWall.position.x = -0.5;
+  // the left caps start where the back caps end, so the corner has no overlapping faces
+  box(-1, WALL_H + 0.07, 3.11, 1.24, 0.14, 6.98, MAT.cap);
+  box(-1, WALL_H + 0.19, 2.885, 0.34, 0.1, 7.43, MAT.cap);
+  [-1, 1].forEach((s) => {
+    [-0.32, 0, 0.32].forEach((o) => {
+      const bar = box(-1, 1.25, 2.5 + o, 0.05, 1.5, 0.04, MAT.wood);
+      bar.rotation.x = s * Math.PI / 4;
+    });
+  });
+
+  // pillars and low walls (the occluders)
+  PILLARS.forEach((p) => {
+    if (p.h > 2) {
+      box(p.x, 0.06, p.z, 0.8, 0.12, 0.8, MAT.stone);
+      box(p.x, 1.25, p.z, 0.7, 2.5, 0.7, MAT.lacquer);
+      box(p.x, 2.57, p.z, 0.9, 0.14, 0.9, MAT.cap);
+      box(p.x, 2.76, p.z, 0.58, 0.24, 0.58, MAT.stone);
+      const roof = mesh(PYR_UP, MAT.cap);
+      roof.scale.set(0.82, 0.4, 0.82);
+      roof.position.set(p.x, 2.88 + 0.2, p.z);
+    } else {
+      box(p.x, 0.53, p.z, 0.7, 1.06, 0.7, MAT.stone);
+      box(p.x, 1.13, p.z, 0.7, 0.14, 0.7, MAT.stoneDark);
+    }
+  });
+  WALLS.forEach((w) => {
+    const zc = w.z0 + (w.len - 1) / 2;
+    box(w.x, 0.43, zc, 0.36, 0.86, w.len, MAT.plaster);
+    box(w.x, 0.93, zc, 0.36, 0.14, w.len, MAT.cap);
+  });
+
+  // ---------- the lantern ----------
+  const LAMP_PART = { cast: false, receive: false };
+  const post = new THREE.Group();
+  post.position.set(POST.x, 0, POST.z);
+  scene.add(post);
+  box(0, 0.1, 0, 0.44, 0.2, 0.44, MAT.stoneDark, post, LAMP_PART).userData.lamp = true;
+  const pole = mesh(CYL(0.06, 2.6), MAT.wood, post, LAMP_PART);
+  pole.position.y = 1.3;
+  pole.userData.lamp = true;
+  mesh(new THREE.SphereGeometry(0.09, 16, 10), MAT.gold, post, LAMP_PART).position.y = 2.66;
+
+  const arm = new THREE.Group();
+  arm.position.y = 2.5;
+  post.add(arm);
+  box(ARM_R / 2, 0, 0, ARM_R + 0.12, 0.06, 0.06, MAT.wood, arm, LAMP_PART).userData.lamp = true;
+  mesh(CYL(0.008, 0.2, 6), MAT.wood, arm, LAMP_PART).position.set(ARM_R, -0.1, 0);
+
+  const lantern = new THREE.Group();
+  lantern.position.set(ARM_R, LAMP_Y - 2.5, 0);
+  arm.add(lantern);
+  const shell = new THREE.Group();
+  lantern.add(shell);
+  const body = mesh(new THREE.SphereGeometry(0.2, 24, 16), MAT.lantern, shell, LAMP_PART);
+  body.scale.y = 1.2;
+  body.userData.lamp = true;
+  mesh(CYL(0.09, 0.05), MAT.gold, shell, LAMP_PART).position.y = 0.25;
+  mesh(CYL(0.09, 0.05), MAT.gold, shell, LAMP_PART).position.y = -0.25;
+  mesh(CYL(0.015, 0.22, 6), MAT.lantern, shell, LAMP_PART).position.y = -0.38;
+  const grab = mesh(new THREE.SphereGeometry(0.5, 12, 8), new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }), lantern, LAMP_PART);
+  grab.userData.lamp = true;
+  const glow = new THREE.Sprite(new THREE.SpriteMaterial({
+    map: radial('rgba(255,190,110,0.9)', 'rgba(255,140,60,0)'),
+    blending: THREE.AdditiveBlending, depthWrite: false, transparent: true,
+  }));
+  glow.scale.setScalar(1.7);
+  lantern.add(glow);
+
+  const lampLight = new THREE.PointLight(0xff9a45, 1.9, 11, 1.25);
+  lampLight.castShadow = true;
+  lampLight.shadow.mapSize.set(1024, 1024);
+  lampLight.shadow.bias = -0.003;
+  lampLight.shadow.camera.near = 0.05;
+  lampLight.shadow.camera.far = 14;
+  lantern.add(lampLight);
+
+  const hintRing = new THREE.Mesh(
+    new THREE.TorusGeometry(0.42, 0.012, 8, 64),
+    new THREE.MeshBasicMaterial({ color: 0xffd9a8, transparent: true, opacity: 0.8, depthWrite: false })
+  );
+  hintRing.rotation.x = Math.PI / 2;
+  lantern.add(hintRing);
+
+  // ---------- shadow-path markers ----------
+  const MOTIF = canvasTexture(128, 128, (g) => {
+    g.strokeStyle = '#ffffff';
+    g.fillStyle = '#ffffff';
+    g.shadowColor = '#ffffff';
+    g.shadowBlur = 8;
+    g.lineWidth = 3;
+    const diamond = (r) => { g.beginPath(); g.moveTo(64, 64 - r); g.lineTo(64 + r, 64); g.lineTo(64, 64 + r); g.lineTo(64 - r, 64); g.closePath(); g.stroke(); };
+    diamond(48);
+    g.lineWidth = 2;
+    diamond(24);
+    g.beginPath(); g.arc(64, 64, 4, 0, TAU); g.fill();
+    [[20, 20], [108, 20], [20, 108], [108, 108]].forEach(([x, y]) => { g.beginPath(); g.arc(x, y, 3, 0, TAU); g.fill(); });
+  });
+  const markerGeo = new THREE.PlaneGeometry(0.8, 0.8);
+  markerGeo.rotateX(-Math.PI / 2);
+  TILES.forEach((t) => {
+    const m = new THREE.Mesh(markerGeo, new THREE.MeshBasicMaterial({
+      map: MOTIF, color: 0x9fb6ff, transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false,
+    }));
+    m.position.set(t.x, 0.012, t.z);
+    m.renderOrder = 2;
+    scene.add(m);
+    t.marker = m;
+    t.lit = 0;
+  });
+
+  // ---------- drifting motes ----------
+  const MOTES = 18;
+  const moteGeo = new THREE.BufferGeometry();
+  const motePos = new Float32Array(MOTES * 3);
+  const moteSeed = [];
+  for (let i = 0; i < MOTES; i++) moteSeed.push([Math.random() * 7 - 0.5, 0.4 + Math.random() * 2, Math.random() * 7 - 0.5, Math.random() * TAU]);
+  moteGeo.setAttribute('position', new THREE.BufferAttribute(motePos, 3));
+  const motes = new THREE.Points(moteGeo, new THREE.PointsMaterial({
+    size: 3, sizeAttenuation: false, color: 0xffc68a, transparent: true, opacity: 0.75,
+    blending: THREE.AdditiveBlending, depthWrite: false,
+  }));
+  scene.add(motes);
+
+  // ---------- the shadow puppet ----------
+  function drawPuppet(g, flip) {
+    if (flip) { g.translate(240, 0); g.scale(-1, 1); }
+    g.translate(120, 0);
+    const LINE = '#2a1712', RED = '#b8352a', LEATHER = '#efcf98', TEAL = '#2e6e68', GOLD = '#d9a441';
+    g.lineJoin = 'round';
+    g.lineCap = 'round';
+    g.lineWidth = 4;
+    g.strokeStyle = LINE;
+    const shape = (pts, fill) => {
+      g.beginPath();
+      g.moveTo(pts[0][0], pts[0][1]);
+      for (let i = 1; i < pts.length; i++) g.lineTo(pts[i][0], pts[i][1]);
+      g.closePath();
+      g.fillStyle = fill;
+      g.fill();
+      g.stroke();
+    };
+    shape([[-24, 110], [-50, 192], [-36, 202], [-12, 132]], TEAL);                 // back sleeve
+    shape([[-30, 104], [30, 104], [54, 318], [-50, 318]], RED);                    // robe
+    shape([[-50, 298], [54, 298], [56, 322], [-52, 322]], TEAL);                   // hem
+    shape([[-14, 104], [16, 104], [2, 142]], LEATHER);                             // collar
+    shape([[-38, 178], [40, 178], [42, 192], [-40, 192]], GOLD);                   // belt
+    g.fillStyle = LEATHER;
+    [[-10, 222], [14, 222], [2, 246], [-22, 264], [26, 264], [2, 282]].forEach(([x, y]) => {
+      g.beginPath(); g.arc(x, y, 5, 0, TAU); g.fill();
+    });
+    shape([[18, 110], [40, 112], [68, 196], [50, 204]], TEAL);                     // front sleeve
+    g.beginPath(); g.arc(62, 208, 9, 0, TAU); g.fillStyle = LEATHER; g.fill(); g.stroke();
+    g.fillStyle = LINE;
+    g.beginPath(); g.ellipse(-16, 332, 16, 8, 0, 0, TAU); g.fill();
+    g.beginPath(); g.ellipse(22, 332, 18, 8, 0, 0, TAU); g.fill();
+    shape([[-8, 86], [10, 86], [10, 106], [-8, 106]], LEATHER);                    // neck
+    g.beginPath();                                                                  // face in profile
+    g.moveTo(-26, 46);
+    g.quadraticCurveTo(-30, 84, -6, 94);
+    g.lineTo(14, 94);
+    g.quadraticCurveTo(24, 92, 26, 84);
+    g.lineTo(30, 78);
+    g.lineTo(26, 72);
+    g.lineTo(37, 63);
+    g.lineTo(28, 54);
+    g.quadraticCurveTo(26, 44, 18, 40);
+    g.closePath();
+    g.fillStyle = LEATHER;
+    g.fill();
+    g.stroke();
+    g.lineWidth = 3;
+    g.beginPath(); g.moveTo(6, 56); g.quadraticCurveTo(15, 51, 24, 56); g.stroke();
+    g.beginPath(); g.moveTo(9, 64); g.quadraticCurveTo(17, 60, 25, 64); g.quadraticCurveTo(17, 67, 9, 64); g.fillStyle = LINE; g.fill();
+    g.lineWidth = 4;
+    shape([[-30, 48], [-28, 24], [-10, 12], [14, 12], [26, 26], [28, 48]], LINE); // hat
+    shape([[-28, 32], [-76, 24], [-78, 34], [-28, 44]], LINE);                     // hat wing
+    g.fillStyle = RED;
+    g.beginPath(); g.arc(-2, 12, 6, 0, TAU); g.fill();
+    g.strokeStyle = 'rgba(42, 23, 18, 0.8)';                                         // control rods
+    g.lineWidth = 3;
+    g.beginPath(); g.moveTo(2, 100); g.lineTo(-30, 356); g.stroke();
+    g.beginPath(); g.moveTo(62, 208); g.lineTo(86, 356); g.stroke();
+  }
+  const texRight = canvasTexture(240, 360, (g) => drawPuppet(g, false));
+  const texLeft = canvasTexture(240, 360, (g) => drawPuppet(g, true));
+  // a vertical card turned toward the camera; 0.816 undoes the isometric squash
+  const PUP_H = 1.05, PUP_W = PUP_H * 0.816 * (240 / 360);
+  const puppetGeo = new THREE.PlaneGeometry(PUP_W, PUP_H);
+  puppetGeo.translate(0, PUP_H / 2, 0);
+  const puppetMat = new THREE.MeshBasicMaterial({ map: texRight, alphaTest: 0.45, side: THREE.DoubleSide });
+  const puppet = new THREE.Mesh(puppetGeo, puppetMat);
+  const char = new THREE.Group();
+  char.rotation.y = Math.PI / 4;
+  char.add(puppet);
+  scene.add(char);
+
   // ---------- sound ----------
+  const SCALE = [293.66, 329.63, 369.99, 440, 493.88, 587.33, 659.25];
   const Sound = {
     ctx: null,
     on: true,
-    si: 0,
+    cache: new Map(),
+    ni: 0,
     ensure() {
       if (this.ctx) { if (this.ctx.state === 'suspended') this.ctx.resume(); return; }
       const AC = window.AudioContext || window.webkitAudioContext;
@@ -567,40 +685,66 @@
       try { this.ctx = new AC(); } catch (e) { return; }
       const c = this.ctx;
       this.master = c.createGain();
-      this.master.gain.value = this.on ? 0.85 : 0;
+      this.master.gain.value = this.on ? 0.9 : 0;
       this.master.connect(c.destination);
       this.dry = c.createGain();
-      this.dry.gain.value = 0.75;
+      this.dry.gain.value = 0.8;
       this.dry.connect(this.master);
       const verb = c.createConvolver();
-      verb.buffer = this.impulse(3.2);
+      verb.buffer = this.impulse(3.4);
       this.wet = c.createGain();
-      this.wet.gain.value = 0.5;
+      this.wet.gain.value = 0.42;
       this.wet.connect(verb);
       verb.connect(this.master);
-      this.pad();
+      this.ambience();
     },
     impulse(sec) {
       const c = this.ctx, n = Math.floor(c.sampleRate * sec), buf = c.createBuffer(2, n, c.sampleRate);
       for (let ch = 0; ch < 2; ch++) {
         const d = buf.getChannelData(ch);
-        for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 2.6);
+        for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 2.8);
       }
       return buf;
     },
     send(node) { node.connect(this.dry); node.connect(this.wet); },
+    // Karplus-Strong pluck, close enough to a guqin string at night
+    string(freq) {
+      const k = Math.round(freq);
+      if (this.cache.has(k)) return this.cache.get(k);
+      const sr = this.ctx.sampleRate, len = Math.floor(sr * 2.4);
+      const buf = this.ctx.createBuffer(1, len, sr), d = buf.getChannelData(0);
+      const P = Math.max(2, Math.round(sr / freq)), line = new Float32Array(P);
+      for (let i = 0; i < P; i++) line[i] = Math.random() * 2 - 1;
+      for (let i = 1; i < P; i++) line[i] = 0.5 * (line[i] + line[i - 1]);
+      for (let i = 0, j = 0; i < len; i++) {
+        const cur = line[j];
+        line[j] = 0.4985 * (cur + line[(j + 1) % P]);
+        d[i] = cur;
+        j = (j + 1) % P;
+      }
+      this.cache.set(k, buf);
+      return buf;
+    },
+    pluck(freq, delay, vol) {
+      const c = this.ctx;
+      if (!c) return;
+      const s = c.createBufferSource(), g = c.createGain();
+      s.buffer = this.string(freq);
+      g.gain.value = vol;
+      s.connect(g);
+      this.send(g);
+      s.start(c.currentTime + (delay || 0));
+    },
     bell(freq, delay, vol, decay) {
       const c = this.ctx;
       if (!c) return;
-      const t = c.currentTime + (delay || 0);
-      const g = c.createGain();
+      const t = c.currentTime + (delay || 0), g = c.createGain();
       g.gain.setValueAtTime(0.0001, t);
       g.gain.exponentialRampToValueAtTime(vol, t + 0.01);
       g.gain.exponentialRampToValueAtTime(0.0001, t + decay);
-      [[1, 1], [2, 0.22], [3.01, 0.07]].forEach(([m, a]) => {
-        const o = c.createOscillator();
+      [[1, 1], [2.76, 0.3]].forEach(([m, a]) => {
+        const o = c.createOscillator(), og = c.createGain();
         o.frequency.value = freq * m;
-        const og = c.createGain();
         og.gain.value = a;
         o.connect(og);
         og.connect(g);
@@ -609,249 +753,246 @@
       });
       this.send(g);
     },
-    step() {
-      const seq = [587.33, 659.25, 739.99, 880, 987.77, 880, 739.99, 659.25];
-      this.si = (this.si + 1) % seq.length;
-      this.bell(seq[this.si], 0, 0.045, 0.55);
-    },
-    tick() {
+    tap(freq, vol) {
       const c = this.ctx;
       if (!c) return;
-      const t = c.currentTime, o = c.createOscillator(), g = c.createGain();
-      o.type = 'triangle';
-      o.frequency.setValueAtTime(1500, t);
-      o.frequency.exponentialRampToValueAtTime(700, t + 0.04);
-      g.gain.setValueAtTime(0.03, t);
-      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.05);
-      o.connect(g);
+      const t = c.currentTime, n = Math.floor(c.sampleRate * 0.05);
+      const buf = c.createBuffer(1, n, c.sampleRate), d = buf.getChannelData(0);
+      for (let i = 0; i < n; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / n, 4);
+      const s = c.createBufferSource(), f = c.createBiquadFilter(), g = c.createGain();
+      s.buffer = buf;
+      f.type = 'bandpass';
+      f.frequency.value = freq;
+      f.Q.value = 6;
+      g.gain.value = vol;
+      s.connect(f);
+      f.connect(g);
       this.send(g);
-      o.start(t);
-      o.stop(t + 0.06);
+      s.start(t);
     },
-    thud() {
-      const c = this.ctx;
-      if (!c) return;
-      const t = c.currentTime, o = c.createOscillator(), g = c.createGain();
-      o.frequency.setValueAtTime(150, t);
-      o.frequency.exponentialRampToValueAtTime(62, t + 0.3);
-      g.gain.setValueAtTime(0.0001, t);
-      g.gain.exponentialRampToValueAtTime(0.22, t + 0.012);
-      g.gain.exponentialRampToValueAtTime(0.0001, t + 0.5);
-      o.connect(g);
-      this.send(g);
-      o.start(t);
-      o.stop(t + 0.55);
-      this.bell(293.66, 0.02, 0.04, 1.2);
+    step() { this.tap(900 + Math.random() * 300, 0.35); },
+    arrive() { this.ni = (this.ni + 1) % SCALE.length; this.pluck(SCALE[this.ni], 0, 0.11); },
+    creak() { this.tap(2400 + Math.random() * 500, 0.12); },
+    rest() { this.bell(1760, 0, 0.025, 1.4); this.bell(2637, 0.06, 0.018, 1.6); },
+    blocked() { this.pluck(146.83, 0, 0.16); this.pluck(155.56, 0.02, 0.1); },
+    nope() { this.pluck(220, 0, 0.08); },
+    win() {
+      [293.66, 369.99, 440, 587.33, 739.99, 880].forEach((f, i) => this.pluck(f, i * 0.16, 0.12));
+      this.bell(1174.66, 1.0, 0.04, 3);
     },
-    joined() { this.thud(); this.bell(880, 0.06, 0.08, 2.4); this.bell(1318.5, 0.18, 0.06, 2.6); },
-    nope() { this.bell(220, 0, 0.04, 0.35); },
-    win() { [293.66, 369.99, 440, 587.33, 739.99, 880, 1174.66].forEach((f, i) => this.bell(f, i * 0.14, 0.09, 2.8)); },
-    pad() {
+    ambience() {
       const c = this.ctx, t = c.currentTime;
       const g = c.createGain();
       g.gain.setValueAtTime(0.0001, t);
-      g.gain.exponentialRampToValueAtTime(0.05, t + 5);
-      const lp = c.createBiquadFilter();
-      lp.type = 'lowpass';
-      lp.frequency.value = 650;
-      lp.Q.value = 0.4;
-      const lfo = c.createOscillator(), depth = c.createGain();
-      lfo.frequency.value = 0.06;
-      depth.gain.value = 260;
-      lfo.connect(depth);
-      depth.connect(lp.frequency);
-      lfo.start(t);
-      [146.83, 220, 329.63, 369.99].forEach((f, i) => {
-        [-4, 4].forEach((cents) => {
-          const o = c.createOscillator(), og = c.createGain();
-          o.type = 'triangle';
-          o.frequency.value = f;
-          o.detune.value = cents + i;
-          og.gain.value = 0.18;
-          o.connect(og);
-          og.connect(lp);
-          o.start(t);
-        });
+      g.gain.exponentialRampToValueAtTime(0.035, t + 4);
+      [73.42, 110].forEach((f) => {
+        const o = c.createOscillator();
+        o.frequency.value = f;
+        o.connect(g);
+        o.start(t);
       });
-      lp.connect(g);
+      const n = Math.floor(c.sampleRate * 2), nb = c.createBuffer(1, n, c.sampleRate), nd = nb.getChannelData(0);
+      for (let i = 0; i < n; i++) nd[i] = Math.random() * 2 - 1;
+      const wind = c.createBufferSource(), lp = c.createBiquadFilter(), wg = c.createGain();
+      wind.buffer = nb;
+      wind.loop = true;
+      lp.type = 'lowpass';
+      lp.frequency.value = 380;
+      wg.gain.value = 0.18;
+      wind.connect(lp);
+      lp.connect(wg);
+      wg.connect(g);
+      wind.start(t);
       this.send(g);
+      const chirp = () => {
+        if (this.on && document.visibilityState === 'visible') {
+          const now = c.currentTime, pan = c.createStereoPanner ? c.createStereoPanner() : null;
+          const cg = c.createGain();
+          cg.gain.value = 0;
+          for (let i = 0; i < 3; i++) {
+            const s = now + i * 0.06;
+            cg.gain.setValueAtTime(0, s);
+            cg.gain.linearRampToValueAtTime(0.006, s + 0.01);
+            cg.gain.linearRampToValueAtTime(0, s + 0.035);
+          }
+          const o = c.createOscillator();
+          o.frequency.value = 4300 + Math.random() * 600;
+          o.connect(cg);
+          if (pan) { pan.pan.value = Math.random() * 1.6 - 0.8; cg.connect(pan); pan.connect(this.dry); }
+          else cg.connect(this.dry);
+          o.start(now);
+          o.stop(now + 0.25);
+        }
+        setTimeout(chirp, 1400 + Math.random() * 2800);
+      };
+      setTimeout(chirp, 2000);
     },
     toggle(on) {
       this.on = on;
-      if (this.master) this.master.gain.setTargetAtTime(on ? 0.85 : 0, this.ctx.currentTime, 0.08);
+      if (this.master) this.master.gain.setTargetAtTime(on ? 0.9 : 0, this.ctx.currentTime, 0.08);
     },
   };
 
   // ---------- state ----------
-  const walker = { node: 'a1', step: null, path: [], pending: null };
-  const rot = { anim: null, tickIndex: 0 };
-  const state = { moved: false, won: false, winT: -1 };
-  let facing = -HALF_PI;
-  const doorFrom = new THREE.Color(0x3f3a6e), doorTo = new THREE.Color(0xffe2a0);
+  const state = { theta: START_K * STEP, k: START_K, won: false, moved: false, rotated: false, winT: -1, shake: 0, shiver: 0 };
+  let shade = new Set();
+  let liveShade = new Set();
+  const walker = { tile: START, step: null, path: [], pending: null, exit: null };
+  let lampAnim = null;
+  const mod8 = (k) => ((k % 8) + 8) % 8;
 
-  function placeChar() { nodePos(walker.node, char.position); }
-  function canRotate() { return !walker.step && !rot.anim && !state.won; }
-  const turnToward = (cur, target, k) => {
-    let d = (target - cur) % (Math.PI * 2);
-    if (d > Math.PI) d -= Math.PI * 2;
-    if (d < -Math.PI) d += Math.PI * 2;
-    return cur + d * Math.min(1, k);
-  };
-
-  // ---------- effects ----------
-  const fx = [];
-  const RING = new THREE.RingGeometry(0.17, 0.23, 48);
-  RING.rotateX(-HALF_PI);
-  function ripple(id, color, big) {
-    const m = new THREE.Mesh(RING, new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.95, depthWrite: false }));
-    nodePos(id, m.position);
-    m.position.y += 0.012;
-    m.renderOrder = 5;
-    scene.add(m);
-    fx.push({ m, t: 0, dur: big ? 1.1 : 0.7, grow: big ? 2.6 : 1.7 });
+  function tileWorld(id, out) {
+    const t = TILES.get(id);
+    return out.set(t.x, 0, t.z);
   }
-  function updateFx(dt) {
-    for (let i = fx.length - 1; i >= 0; i--) {
-      const f = fx[i];
-      f.t = Math.min(1, f.t + dt / f.dur);
-      f.m.scale.setScalar(1 + (f.grow - 1) * (1 - Math.pow(1 - f.t, 3)));
-      f.m.material.opacity = 0.95 * (1 - f.t);
-      if (f.t >= 1) {
-        scene.remove(f.m);
-        f.m.material.dispose();
-        fx.splice(i, 1);
-      }
+  function setLampTheta(theta) {
+    state.theta = theta;
+    arm.rotation.y = -theta;
+    renderer.shadowMap.needsUpdate = true;
+    liveShade = shadeAt(theta);
+  }
+  // how far the lantern can travel toward `to` before its light would reach her
+  function safeReach(from, to) {
+    const tile = TILES.get(walker.tile);
+    const dir = Math.sign(to - from);
+    let a = from;
+    while (Math.abs(to - a) > 1e-9) {
+      const next = Math.abs(to - a) <= SWEEP ? to : a + dir * SWEEP;
+      if (!inShadow(tile, next)) return { angle: a, blocked: true };
+      a = next;
     }
+    return { angle: a, blocked: false };
+  }
+  function settleLamp(theta) {
+    const before = state.k;
+    state.k = mod8(Math.round(theta / STEP));
+    setLampTheta(theta);
+    shade = shadeAt(theta);
+    if (state.k !== before) {
+      state.rotated = true;
+      hintRing.visible = false;
+      Sound.rest();
+    }
+    updateHint();
+  }
+  function animateLamp(to, dur) {
+    lampAnim = { from: state.theta, to, t: 0, dur: dur || 0.32 + 0.3 * Math.min(2, Math.abs(to - state.theta) / STEP) };
+  }
+  function rotateBy(n) {
+    if (state.won || walker.step || lampAnim) return;
+    const target = (Math.round(state.theta / STEP) + n) * STEP;
+    const r = safeReach(state.theta, target);
+    if (r.blocked) { onBlocked(); return; }
+    animateLamp(target);
+  }
+  function onBlocked() {
+    state.shake = 1;
+    state.shiver = 1;
+    Sound.blocked();
+    flashHint('再转下去，灯光就会照到她', true);
   }
 
   // ---------- hints ----------
-  let hintTimer = 0;
-  function setHint(text) {
-    if (hintEl.dataset.text === text) return;
+  let hintTimer = 0, flashTimer = 0, flashing = false;
+  function showHint(text, warm) {
+    if (hintEl.dataset.text === text && hintEl.classList.contains('warm') === !!warm) return;
     hintEl.dataset.text = text;
     hintEl.classList.remove('show');
     clearTimeout(hintTimer);
     hintTimer = setTimeout(() => {
       hintEl.textContent = text;
+      hintEl.classList.toggle('warm', !!warm);
       if (text) hintEl.classList.add('show');
-    }, 260);
+    }, 220);
+  }
+  function flashHint(text, warm) {
+    flashing = true;
+    showHint(text, warm);
+    clearTimeout(flashTimer);
+    flashTimer = setTimeout(() => { flashing = false; updateHint(); }, 2400);
   }
   function updateHint() {
-    if (state.won) return setHint('');
-    const n = walker.node;
-    const linkedTo = (a, test) => graph.get(a).some((e) => test(e.to));
-    if (n === 'a1' && !state.moved) return setHint('轻点石板，带她向前走');
-    if (n === 'a1' || n === 'a2' || n === 'a3') {
-      return setHint(linkedTo('a3', (id) => BRIDGE.includes(id)) ? '桥接上了，走上去' : '拖动转轮，转动石桥');
-    }
-    if (BRIDGE.includes(n)) {
-      return setHint(linkedTo(n, (id) => id === 't1') ? '往前走，相信你看到的路' : '站在桥上，再转一次');
-    }
-    return setHint('沿着台阶，走到门前');
+    if (flashing) return;
+    if (state.won) return showHint('');
+    if (!state.rotated && !state.moved) return showHint('她只能走在影子里。拖动灯笼，影子会跟着转');
+    if (findPath(walker.tile, GATE_IN, shade)) return showHint('月门就在前面');
+    if (state.rotated && !state.moved) return showHint('点发蓝的石板，带她走过去');
+    return showHint('一边转灯，一边走向月门');
   }
 
   // ---------- walking ----------
-  function walkTo(target) {
-    if (state.won || rot.anim) return;
-    if (walker.step) {
-      walker.pending = target;
-      ripple(target, 0xffffff);
+  const fx = [];
+  const RING = new THREE.RingGeometry(0.17, 0.23, 48);
+  RING.rotateX(-Math.PI / 2);
+  function ripple(id, color) {
+    const m = new THREE.Mesh(RING, new THREE.MeshBasicMaterial({ color, transparent: true, opacity: 0.95, depthWrite: false }));
+    tileWorld(id, m.position);
+    m.position.y = 0.02;
+    m.renderOrder = 5;
+    scene.add(m);
+    fx.push({ m, t: 0 });
+  }
+  function walkTo(id) {
+    if (state.won || lampAnim || press && press.dragging) return;
+    if (!shade.has(id)) {
+      ripple(id, 0xffb066);
+      Sound.nope();
+      flashHint('那里有光，她过不去', true);
       return;
     }
-    if (target === walker.node) { ripple(target, 0xffffff); return; }
-    const path = findPath(walker.node, target);
-    if (!path) { ripple(target, 0x8a7fb0); Sound.nope(); return; }
-    ripple(target, 0xffffff);
-    state.moved = true;
+    ripple(id, 0xc4d2ff);
+    if (walker.step) { walker.pending = id; return; }
+    if (id === walker.tile) return;
+    const path = findPath(walker.tile, id, shade);
+    if (!path) {
+      Sound.nope();
+      flashHint('影子没有连到那里，转一转灯笼', true);
+      return;
+    }
     walker.path = path.slice(1);
     nextStep();
   }
   function nextStep() {
     if (walker.pending) {
-      const p = findPath(walker.node, walker.pending);
+      const p = findPath(walker.tile, walker.pending, shade);
       walker.pending = null;
       walker.path = p ? p.slice(1) : [];
     }
     if (!walker.path.length) { updateHint(); return; }
     const to = walker.path.shift();
-    const edge = graph.get(walker.node).find((e) => e.to === to);
-    if (!edge) { walker.path = []; updateHint(); return; }
-    const a = nodePos(walker.node), b = nodePos(to);
-    const d = b.clone().sub(a);
-    if (edge.illusion) d.subScalar(d.y);
-    facing = Math.atan2(d.x, d.z);
-    walker.step = { to, t: 0, a, b, illusion: edge.illusion, dur: STEP_TIME * (Math.abs(b.y - a.y) > 0.3 && !edge.illusion ? 1.2 : 1) };
-    if (edge.illusion) setOverlay(true);
+    const a = tileWorld(walker.tile, new THREE.Vector3()), b = tileWorld(to, new THREE.Vector3());
+    const screenDx = (b.x - a.x) - (b.z - a.z);
+    if (screenDx !== 0) puppetMat.map = screenDx > 0 ? texRight : texLeft;
+    walker.step = { to, a, b, t: 0 };
+    state.moved = true;
   }
   function updateWalker(dt) {
     const s = walker.step;
-    if (char.parent === scene) char.rotation.y = turnToward(char.rotation.y, facing, dt * 12);
-    if (!s) {
-      body.position.y = 0;
-      body.scale.y = 1 + Math.sin(clock.t * 2.2) * 0.012;
+    if (s) {
+      s.t = Math.min(1, s.t + dt / STEP_TIME);
+      char.position.lerpVectors(s.a, s.b, s.t);
+      puppet.position.y = Math.abs(Math.sin(s.t * Math.PI)) * 0.05;
+      puppet.rotation.z = Math.sin(s.t * Math.PI * 2) * 0.07;
+      if (s.t >= 1) {
+        walker.tile = s.to;
+        walker.step = null;
+        Sound.step();
+        if (s.to === GATE) { win(); return; }
+        nextStep();
+        if (!walker.step) Sound.arrive();
+      }
       return;
     }
-    s.t = Math.min(1, s.t + dt / s.dur);
-    char.position.lerpVectors(s.a, s.b, s.t);
-    body.position.y = Math.sin(s.t * Math.PI) * 0.03;
-    if (s.t >= 1) {
-      walker.node = s.to;
-      walker.step = null;
-      if (s.illusion) setOverlay(false);
-      Sound.step();
-      if (s.to === 'g') { win(); return; }
-      nextStep();
+    if (walker.exit) {
+      const e = walker.exit;
+      e.t = Math.min(1, e.t + dt / 1.4);
+      char.position.set(1, 0, -1 - 0.9 * e.t);
+      puppetMat.opacity = 1 - e.t;
+      return;
     }
-  }
-
-  // ---------- rotating ----------
-  function setRotation(angle) {
-    rotator.rotation.y = angle;
-    const idx = Math.floor(angle / (Math.PI / 8));
-    if (idx !== rot.tickIndex) { rot.tickIndex = idx; Sound.tick(); }
-  }
-  function beginRotate() {
-    if (BRIDGE.includes(walker.node) && char.parent === scene) rotator.attach(char);
-    hintRing.visible = false;
-  }
-  function snapRotate(target) {
-    const from = rotator.rotation.y;
-    if (target === undefined) target = Math.round(from / HALF_PI) * HALF_PI;
-    const dist = Math.abs(target - from);
-    rot.anim = { from, to: target, t: 0, dur: 0.28 + 0.32 * Math.min(1.5, dist / HALF_PI) };
-  }
-  const easeOutBack = (t) => 1 + 2.3 * Math.pow(t - 1, 3) + 1.3 * Math.pow(t - 1, 2);
-  function updateRotation(dt) {
-    const a = rot.anim;
-    if (!a) return;
-    a.t = Math.min(1, a.t + dt / a.dur);
-    setRotation(a.from + (a.to - a.from) * easeOutBack(a.t));
-    if (a.t >= 1) finishRotate(a.to);
-  }
-  function finishRotate(to) {
-    rot.anim = null;
-    rotator.rotation.y = to;
-    rotator.updateMatrixWorld(true);
-    if (char.parent === rotator) {
-      scene.attach(char);
-      facing = char.rotation.y;
-    }
-    placeChar();
-    const before = dockLinks();
-    buildGraph();
-    const fresh = [...dockLinks()].filter((k) => !before.has(k));
-    if (fresh.length) {
-      Sound.joined();
-      fresh.forEach((k) => k.split('|').forEach((id) => ripple(id, 0xffe2a0, true)));
-    } else {
-      Sound.thud();
-    }
-    updateHint();
-  }
-  function quarterTurn() {
-    if (!canRotate()) return;
-    beginRotate();
-    snapRotate(Math.round(rotator.rotation.y / HALF_PI) * HALF_PI - HALF_PI);
+    const sh = state.shiver;
+    puppet.position.y = 0;
+    puppet.rotation.z = sh > 0 ? Math.sin(clock.t * 60) * 0.08 * sh : Math.sin(clock.t * 1.6) * 0.015;
   }
 
   // ---------- win / reset ----------
@@ -859,49 +1000,60 @@
   function win() {
     state.won = true;
     state.winT = 0;
-    facing = Math.PI;
-    setHint('');
+    showHint('');
     Sound.win();
+    puppetMat.map = texRight;
+    puppetMat.transparent = true;
+    puppetMat.alphaTest = 0.02;
+    walker.exit = { t: 0 };
     setTimeout(() => {
       if (!state.won) return;
       card.hidden = false;
       requestAnimationFrame(() => card.classList.add('show'));
       document.getElementById('btn-again').focus({ preventScroll: true });
-    }, 1900);
+    }, 2000);
   }
   function reset(data) {
     state.won = false;
     state.winT = -1;
+    state.moved = false;
+    state.rotated = false;
+    state.shake = state.shiver = 0;
     card.classList.remove('show');
     card.hidden = true;
-    BASIC.door.color.copy(doorFrom);
-    rot.anim = null;
-    if (char.parent !== scene) scene.attach(char);
+    lampAnim = null;
     walker.step = null;
     walker.path = [];
     walker.pending = null;
-    setOverlay(false);
-    let quarter = 1, node = 'a1';
-    if (data && Number.isFinite(data.quarter) && nodes[data.node] && data.node !== 'g') {
-      quarter = data.quarter;
-      node = data.node;
+    walker.exit = null;
+    puppetMat.opacity = 1;
+    puppetMat.transparent = false;
+    puppetMat.alphaTest = 0.45;
+    puppetMat.map = texLeft;
+    beyondMat.color.setRGB(0.55, 0.55, 0.6);
+    lampLight.intensity = 1.9;
+    hintRing.visible = true;
+    let k = START_K, tile = START;
+    if (data && Number.isInteger(data.k) && TILES.has(data.tile) && data.tile !== GATE) {
+      const s = shadeAt(data.k * STEP);
+      if (s.has(data.tile)) { k = data.k; tile = data.tile; }
     }
-    rotator.rotation.y = quarter * HALF_PI;
-    rot.tickIndex = Math.floor(rotator.rotation.y / (Math.PI / 8));
-    rotator.updateMatrixWorld(true);
-    walker.node = node;
-    state.moved = node !== 'a1';
-    hintRing.visible = quarter === 1;
-    facing = char.rotation.y = -HALF_PI;
-    buildGraph();
-    placeChar();
+    walker.tile = tile;
+    state.k = k;
+    state.theta = k * STEP;
+    setLampTheta(state.theta);
+    shade = shadeAt(state.theta);
+    state.rotated = state.moved = tile !== START;
+    hintRing.visible = !state.rotated;
+    tileWorld(tile, char.position);
+    flashing = false;
     updateHint();
   }
 
   // ---------- input ----------
   const raycaster = new THREE.Raycaster();
   const ndc = new THREE.Vector2();
-  const bridgePlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -0.5);
+  const lampPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -LAMP_Y);
   const tmp = new THREE.Vector3();
   function aim(cx, cy) {
     const r = canvas.getBoundingClientRect();
@@ -911,12 +1063,17 @@
   function hitAt(cx, cy) {
     aim(cx, cy);
     const hits = raycaster.intersectObjects(pickables, false);
-    return hits.length ? hits[0] : null;
+    for (const h of hits) {
+      if (h.object.userData.lamp) return { lamp: true };
+      if (h.object.userData.tile) return { tile: h.object.userData.tile };
+      return null;
+    }
+    return null;
   }
   function angleAt(cx, cy) {
     aim(cx, cy);
-    if (!raycaster.ray.intersectPlane(bridgePlane, tmp)) return null;
-    return Math.atan2(tmp.x - rotator.position.x, tmp.z - rotator.position.z);
+    if (!raycaster.ray.intersectPlane(lampPlane, tmp)) return null;
+    return Math.atan2(tmp.z - POST.z, tmp.x - POST.x);
   }
 
   let press = null;
@@ -924,51 +1081,60 @@
     Sound.ensure();
     if (state.won || press) return;
     const hit = hitAt(e.clientX, e.clientY);
-    press = { id: e.pointerId, x: e.clientX, y: e.clientY, hit, turning: false, moved: 0 };
-    press.canTurn = !!(hit && hit.object.userData.rot) && canRotate();
-    if (press.canTurn) {
+    press = { id: e.pointerId, x: e.clientX, y: e.clientY, hit, moved: 0, dragging: false };
+    if (hit && hit.lamp && !walker.step && !lampAnim) {
       press.last = angleAt(e.clientX, e.clientY);
-      press.r0 = rotator.rotation.y;
+      press.base = state.theta;
       press.acc = 0;
+      press.startTheta = state.theta;
     }
-    try { canvas.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
+    try { canvas.setPointerCapture(e.pointerId); } catch (err) { /* not needed for mouse */ }
   });
   canvas.addEventListener('pointermove', (e) => {
     if (!press) {
       if (e.pointerType === 'mouse') {
-        const h = hitAt(e.clientX, e.clientY), ud = h ? h.object.userData : {};
-        canvas.style.cursor = ud.node ? 'pointer' : ud.rot ? 'grab' : 'default';
+        const h = hitAt(e.clientX, e.clientY);
+        canvas.style.cursor = !h ? 'default' : h.lamp ? 'grab' : shade.has(h.tile) ? 'pointer' : 'not-allowed';
       }
       return;
     }
     if (e.pointerId !== press.id) return;
     press.moved = Math.max(press.moved, Math.hypot(e.clientX - press.x, e.clientY - press.y));
-    if (!press.turning && press.canTurn && press.moved > 6 && press.last !== null) {
-      press.turning = true;
+    if (!press.dragging && press.base !== undefined && press.moved > 5 && press.last !== null) {
+      press.dragging = true;
       canvas.style.cursor = 'grabbing';
-      beginRotate();
     }
-    if (press.turning) {
-      const a = angleAt(e.clientX, e.clientY);
-      if (a === null) return;
-      let d = a - press.last;
-      if (d > Math.PI) d -= Math.PI * 2;
-      if (d < -Math.PI) d += Math.PI * 2;
-      press.acc += d;
-      press.last = a;
-      setRotation(press.r0 + press.acc);
+    if (!press.dragging) return;
+    const a = angleAt(e.clientX, e.clientY);
+    if (a === null) return;
+    let d = a - press.last;
+    if (d > Math.PI) d -= TAU;
+    if (d < -Math.PI) d += TAU;
+    press.acc += d;
+    press.last = a;
+    const r = safeReach(state.theta, press.base + press.acc);
+    if (r.angle !== state.theta) {
+      if (Math.floor(r.angle / (STEP / 6)) !== Math.floor(state.theta / (STEP / 6))) Sound.creak();
+      setLampTheta(r.angle);
     }
+    if (r.blocked && !press.warned) { press.warned = true; onBlocked(); }
+    if (!r.blocked) press.warned = false;
   });
   function endPress(e) {
     if (!press || e.pointerId !== press.id) return;
     const p = press;
     press = null;
     canvas.style.cursor = 'default';
-    if (p.turning) { snapRotate(); return; }
+    if (p.dragging) {
+      const near = Math.round(state.theta / STEP) * STEP;
+      const other = state.theta > near ? near + STEP : near - STEP;
+      const target = [near, other, Math.round(p.startTheta / STEP) * STEP].find((c) => !safeReach(state.theta, c).blocked);
+      animateLamp(target === undefined ? p.startTheta : target);
+      return;
+    }
     if (e.type === 'pointercancel' || p.moved > 12 || !p.hit) return;
-    const ud = p.hit.object.userData;
-    if (ud.node) walkTo(ud.node);
-    else if (ud.rot) quarterTurn();
+    if (p.hit.lamp) rotateBy(1);
+    else if (p.hit.tile) walkTo(p.hit.tile);
   }
   canvas.addEventListener('pointerup', endPress);
   canvas.addEventListener('pointercancel', endPress);
@@ -976,10 +1142,9 @@
   window.addEventListener('keydown', (e) => {
     if ((e.key === 'r' || e.key === 'R') && !e.metaKey && !e.ctrlKey) {
       Sound.ensure();
-      quarterTurn();
+      rotateBy(e.shiftKey ? -1 : 1);
     }
   });
-
   const soundBtn = document.getElementById('btn-sound');
   soundBtn.addEventListener('click', () => {
     const on = soundBtn.getAttribute('aria-pressed') !== 'true';
@@ -992,20 +1157,20 @@
   document.getElementById('btn-again').addEventListener('click', () => { Sound.ensure(); reset(); });
 
   // ---------- framing ----------
-  const FIT = [
-    [-5.5, 0.5, -2.5], [-5.5, -0.5, -2.5], [-2.5, 2.5, -7.5], [-4, 4.55, -7],
-    [0.5, 0.5, -3.5], [2.5, 0.5, 0.5], [2.5, -1.5, 0.5], [-0.5, -1.5, 0.5],
-  ].map((p) => new THREE.Vector3(p[0], p[1], p[2]));
+  const P = (x, y, z) => new THREE.Vector3(x, y, z);
+  const FIT_CORE = [P(-1.5, 2.6, -1.5), P(6.5, 0, -0.5), P(-0.5, 0, 6.5), P(6.5, -0.9, 6.5), P(3, 3.2, 0)];
+  const FIT_WIDE = [P(6.5, 2.6, -1.5), P(-1.5, 2.6, 6.5)];
   function fit() {
     const W = window.innerWidth, H = window.innerHeight;
     renderer.setSize(W, H);
+    const pts = W > H ? FIT_CORE.concat(FIT_WIDE) : FIT_CORE;
     let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;
-    FIT.forEach((p) => {
+    pts.forEach((p) => {
       const x = p.dot(SCREEN_R), y = p.dot(SCREEN_U);
       minX = Math.min(minX, x); maxX = Math.max(maxX, x);
       minY = Math.min(minY, y); maxY = Math.max(maxY, y);
     });
-    const padTop = Math.min(120, H * 0.14), padBottom = Math.min(100, H * 0.12), padSide = Math.max(24, W * 0.06);
+    const padTop = Math.min(110, H * 0.13), padBottom = Math.min(90, H * 0.11), padSide = W > H ? Math.max(24, W * 0.05) : 10;
     const availW = W - padSide * 2, availH = H - padTop - padBottom;
     const ppu = Math.min(availW / (maxX - minX), availH / (maxY - minY));
     const cx = (minX + maxX) / 2, cy = (minY + maxY) / 2;
@@ -1028,25 +1193,50 @@
   }
   function tickWorld(dt) {
     clock.t += dt;
+    if (lampAnim) {
+      const a = lampAnim;
+      a.t = Math.min(1, a.t + dt / a.dur);
+      const k = 1 - Math.pow(1 - a.t, 3);
+      setLampTheta(a.from + (a.to - a.from) * k);
+      if (a.t >= 1) { lampAnim = null; settleLamp(a.to); }
+    }
     updateWalker(dt);
-    updateRotation(dt);
-    updateFx(dt);
 
+    // markers follow the live shadow, so they move while the lantern swings
+    TILES.forEach((t) => {
+      const target = liveShade.has(t.id) ? 1 : 0;
+      t.lit += (target - t.lit) * Math.min(1, dt * 10);
+      t.marker.material.opacity = t.lit * (0.42 + 0.08 * Math.sin(clock.t * 2 + t.x + t.z));
+    });
+    for (let i = fx.length - 1; i >= 0; i--) {
+      const f = fx[i];
+      f.t = Math.min(1, f.t + dt / 0.7);
+      f.m.scale.setScalar(1 + 0.8 * (1 - Math.pow(1 - f.t, 3)));
+      f.m.material.opacity = 0.95 * (1 - f.t);
+      if (f.t >= 1) { scene.remove(f.m); f.m.material.dispose(); fx.splice(i, 1); }
+    }
+
+    state.shake = Math.max(0, state.shake - dt * 2.5);
+    state.shiver = Math.max(0, state.shiver - dt * 1.8);
+    shell.rotation.z = Math.sin(clock.t * 40) * 0.25 * state.shake + Math.sin(clock.t * 1.3) * 0.03;
+    glow.material.opacity = 0.85 + Math.sin(clock.t * 3.1) * 0.06 + Math.sin(clock.t * 7.3) * 0.04;
+    lampLight.intensity = (state.won ? 1.4 : 1.9) + Math.sin(clock.t * 5.3) * 0.04;
     if (hintRing.visible) {
       const p = (clock.t % 1.8) / 1.8;
-      hintRing.scale.setScalar(0.85 + p * 0.5);
+      hintRing.scale.setScalar(0.8 + p * 0.7);
       hintRing.material.opacity = 0.8 * (1 - p);
     }
-    relic.rotation.y += dt * (state.won ? 4 : 0.9);
+    for (let i = 0; i < MOTES; i++) {
+      const s = moteSeed[i];
+      motePos[i * 3] = s[0] + Math.sin(clock.t * 0.3 + s[3]) * 0.4;
+      motePos[i * 3 + 1] = s[1] + Math.sin(clock.t * 0.5 + s[3] * 2) * 0.25;
+      motePos[i * 3 + 2] = s[2] + Math.cos(clock.t * 0.27 + s[3]) * 0.4;
+    }
+    moteGeo.attributes.position.needsUpdate = true;
     if (state.winT >= 0) {
-      state.winT = Math.min(1, state.winT + dt / 1.6);
+      state.winT = Math.min(1, state.winT + dt / 1.8);
       const k = state.winT * state.winT * (3 - 2 * state.winT);
-      BASIC.door.color.copy(doorFrom).lerp(doorTo, k);
-      relic.position.y = 2.3 + 0.45 * k + Math.sin(clock.t * 2) * 0.04;
-      relic.scale.setScalar(1 + 0.5 * k);
-    } else {
-      relic.position.y = 2.3 + Math.sin(clock.t * 1.6) * 0.06;
-      relic.scale.setScalar(1);
+      beyondMat.color.setRGB(0.55 + 0.45 * k, 0.55 + 0.45 * k, 0.6 + 0.4 * k);
     }
   }
 
@@ -1057,11 +1247,31 @@
     requestAnimationFrame((t) => { clock.last = t; loop(t); });
   }
   const hot = window.claude && window.claude.hot;
-  if (hot && typeof hot.snapshot === 'function') {
-    hot.snapshot(() => ({ quarter: Math.round(rotator.rotation.y / HALF_PI), node: walker.node }));
-  }
+  if (hot && typeof hot.snapshot === 'function') hot.snapshot(() => ({ k: state.k, tile: walker.tile }));
   if (hot && typeof hot.ready === 'function') hot.ready(start);
   else start((hot && hot.data) || {});
+
+  // ---------- sky ----------
+  function drawStars() {
+    const c = document.getElementById('stars');
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    c.width = window.innerWidth * dpr;
+    c.height = window.innerHeight * dpr;
+    c.style.width = window.innerWidth + 'px';
+    c.style.height = window.innerHeight + 'px';
+    const g = c.getContext('2d');
+    let seed = 7;
+    const rnd = () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; };
+    const count = Math.round((window.innerWidth * window.innerHeight) / 5200);
+    for (let i = 0; i < count; i++) {
+      const x = rnd() * c.width, y = Math.pow(rnd(), 1.6) * c.height * 0.8;
+      g.fillStyle = 'rgba(239, 230, 210, ' + (0.15 + rnd() * 0.55).toFixed(2) + ')';
+      g.beginPath();
+      g.arc(x, y, (0.4 + rnd() * 0.9) * dpr, 0, Math.PI * 2);
+      g.fill();
+    }
+  }
 })();
 </script>
+</body>
 </html>
