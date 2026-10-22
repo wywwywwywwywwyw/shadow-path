@@ -2,7 +2,7 @@
 
 一个关于光与影的等距小游戏：旅人只能走在影子里。在漂浮的庭院中转动光球、推动小塔、升降石柱，让影子替她铺出一条通往那扇门的路。
 
-**在线试玩：** https://wywwywwywwywwyw.github.io/silent-spire/
+**在线试玩：** https://wywwywwywwywwyw.github.io/shadow-path/
 
 ## 关卡
 

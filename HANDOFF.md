@@ -10,7 +10,7 @@
 
 1. 把仓库克隆到一个长期保存的文件夹，然后在新对话里把这个文件夹选为项目：
    ```
-   git clone https://github.com/wywwywwywwywwyw/silent-spire.git
+   git clone https://github.com/wywwywwywwywwyw/shadow-path.git
    ```
 2. 本机访问 GitHub 要走代理。在 PowerShell 里先运行 `$env:HTTPS_PROXY = 'http://127.0.0.1:7897'`，再执行 git 或 gh 命令。
 3. 让新对话先读这份 `HANDOFF.md`，再跑一遍 `python tools/solver/verify_levels.py`，确认环境正常。
@@ -20,8 +20,8 @@
 
 | 内容 | 位置 |
 | --- | --- |
-| 在线试玩 | https://wywwywwywwywwyw.github.io/silent-spire/ |
-| 代码仓库 | https://github.com/wywwywwywwywwyw/silent-spire（分支 `main`，Pages 直接发布根目录） |
+| 在线试玩 | https://wywwywwywwywwyw.github.io/shadow-path/ （2026-10-21 起；旧地址 `/silent-spire/` 已失效） |
+| 代码仓库 | https://github.com/wywwywwywwywwyw/shadow-path（分支 `main`，Pages 直接发布根目录；2026-10-21 从 `silent-spire` 改名，旧仓库地址 GitHub 会自动跳转） |
 | 面试用作品说明 | https://claude.ai/artifact/RkMbt1fs1V5kdvHyPjQEa3（Claude 文档，仅本人可见） |
 | 第一版《静默之塔》Artifact | https://claude.ai/artifact/JZbkm5v4ho8ji9ACyXZTnW（私有，旧版本） |
 | 本地仓库 | 上一个对话的 `silent-spire-site/` 是临时文件夹，会随那个会话一起删除；新对话请从 GitHub 克隆 |
@@ -96,7 +96,7 @@
 ## 文件结构
 
 ```
-silent-spire/               ← git 仓库根目录，也是 Pages 发布目录
+shadow-path/                ← git 仓库根目录，也是 Pages 发布目录（本机克隆的文件夹可能还叫 silent-spire）
 ├── index.html              游戏本体（游戏代码全部在这一个文件里）
 ├── README.md               对外介绍：关卡、玩法、技术
 ├── HANDOFF.md              本文件
@@ -183,7 +183,7 @@ GitHub Pages 用 Jekyll 发布，以 `.` 开头的目录（`.claude/`）不会�
 | 降平的柱子不能当停留点 | 点它就是升降，她只能从上面走过去 | 为了让只会点按的玩家能把降平的柱子升起来；三章标准解法都不需要停在柱子上 |
 | 中文字体是子集 | 新文案里的生字会回退成系统字体 | 改文案后跑 `python tools/fonts.py`；`--check` 会报出缺的字 |
 | 窄屏会裁掉两侧角塔 | 纯装饰 | 有意为之，保证庭院完整 |
-| 仓库名 `silent-spire` 与游戏名不一致 | 链接不直观 | 提议过改成 `shadow-path`；改名后 Pages 网址会变，旧网址失效 |
+| 面试作品说明里的试玩链接还是旧地址 | 点开会 404 | 仓库改名后需要手动把作品说明里的链接换成 `/shadow-path/` |
 | 没有 favicon | 每次加载有一条 `favicon.ico` 404 | 无害 |
 | Git 提示 LF 会转成 CRLF | 无害 | Windows 默认 autocrlf |
 
@@ -201,7 +201,6 @@ GitHub Pages 用 Jekyll 发布，以 `.` 开头的目录（`.claude/`）不会�
 
 4. 提示系统：直接用求解器给出“下一步最优操作”（需要把求解逻辑移植到 JS）。
 5. 第四章 / 更多关卡，沿用同一套生成和筛选流程。`verify_levels.py` 已按机关类型自动选求解器，新章节只要写进 JSON 块；同时有小塔和柱子的章节还需要新的求解器。
-6. （可选）仓库改名为 `shadow-path`，网址会随之变化。
 
 ## 我们定过的约定
 
@@ -209,7 +208,7 @@ GitHub Pages 用 Jekyll 发布，以 `.` 开头的目录（`.claude/`）不会�
 
 - 游戏名：中文《影径》，英文 *The Shadow Path*；网页标题“影径”。
 - 章节：I 黄昏、II 清晨、III 星夜；HUD 副标题“The Shadow Path · I / II / III”。
-- 第一版 demo 叫《静默之塔》*The Silent Spire*，仓库名沿用 `silent-spire`。
+- 第一版 demo 叫《静默之塔》*The Silent Spire*。仓库原名沿用 `silent-spire`，2026-10-21 改名为 `shadow-path`，和游戏名一致。
 - 主角叫“旅人”，代词用“她”。机关叫“光球”“小塔”（动作叫“推塔”）“升降柱”（也叫“柱子”）；终点叫“门”。
 - 代码里：格子 id 是 `'x,z'`；门是 `'gateX,-1'`；关卡字段是 `roman / name / intro / goal / card`；进度键名 `shadow-path-level`，已通关键名 `shadow-path-cleared`。
 - 提交信息：英文祈使句一句话，例如 `Add chapter III with …`。
@@ -247,7 +246,7 @@ GitHub Pages 用 Jekyll 发布，以 `.` 开头的目录（`.claude/`）不会�
 2. 起预览服务器 `spire`，在 Claude 内置浏览器里打开 http://localhost:8765/ ；临时加上 `window.__shadow` 钩子，三章都按上面的标准解法完整通关，第三关还要确认“直接降到底”走不通。机关操作要拖动、点按、键盘都试到。模拟点击时注意等距视角下的遮挡：例如柱子 (1,2) 的中心被 (2,3) 的矮墙挡住，要点它露出来的部分。
 3. 检查控制台没有报错；在手机尺寸 375×812 下检查没有横向滚动。
 4. 删掉钩子，提交并推送到 `main`。
-5. 用 `gh api repos/wywwywwywwywwyw/silent-spire/pages/builds/latest` 等部署完成，再打开线上地址确认加载正常。
+5. 用 `gh api repos/wywwywwywwywwyw/shadow-path/pages/builds/latest` 等部署完成，再打开线上地址确认加载正常。
 
 本机推送的注意事项：
 
@@ -265,7 +264,8 @@ GitHub Pages 用 Jekyll 发布，以 `.` 开头的目录（`.claude/`）不会�
 
 | 提交 | 内容 |
 | --- | --- |
-| 最新 | 点按和键盘操作小塔、柱子；切关时屏蔽输入；已通关标记；关卡数据只留 `index.html` 一份；three.js 和字体自托管 |
+| 最新 | 仓库改名为 `shadow-path`，文档链接换成新地址 |
+| `83c1fc3` | 点按和键盘操作小塔、柱子；切关时屏蔽输入；已通关标记；关卡数据只留 `index.html` 一份；three.js 和字体自托管 |
 | `57fb26f` | 加入关卡求解器、复核脚本、预览配置和本文件 |
 | `f774902` | 第三关重做：柱子必须先降平当路、再升起挡光 |
 | `749dc2f` | 第三章（升降柱、星夜配色）和选关菜单 |
