@@ -5,10 +5,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>影径</title>
 <meta name="description" content="一个关于光与影的等距小游戏：旅人只能走在影子里，转动光球、推动小塔、升降石柱，让影子替她铺出一条通往那扇门的路。">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Marcellus&family=ZCOOL+XiaoWei&display=swap">
+<link rel="preload" href="vendor/fonts/zcool-xiaowei.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="modulepreload" href="vendor/three.module.min.js">
 <style>
+  /* Self-hosted subsets holding only the characters this page uses (tools/fonts.py rebuilds them),
+     so the page does not depend on Google Fonts, which is slow or blocked in mainland China. */
+  @font-face { font-family: "ZCOOL XiaoWei"; src: url("vendor/fonts/zcool-xiaowei.woff2") format("woff2"); font-display: swap; }
+  @font-face { font-family: "Marcellus"; src: url("vendor/fonts/marcellus.woff2") format("woff2"); font-display: swap; }
+
   :root {
     /* Layout: full-bleed sky with the floating court as the only subject; HUD pinned to the corners, end card as a centred veil.
        Each chapter swaps the sky, glass and ink tokens below from script. */
@@ -128,6 +132,15 @@
   .chapter-btn span { font: 400 13px/1 var(--font-display); letter-spacing: 0.1em; }
   .chapter-btn:hover { color: var(--ink); }
   .chapter-btn[aria-current="true"] { color: var(--ink); border-bottom-color: var(--ink); }
+  /* a cleared chapter carries a small diamond, the shape of a floor tile seen from above */
+  .chapter-btn[data-cleared]::after {
+    content: "";
+    align-self: center;
+    width: 5px; height: 5px;
+    background: currentColor;
+    opacity: 0.75;
+    transform: rotate(45deg);
+  }
   .chapter-btn:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
   .actions { display: flex; gap: 10px; }
   .icon-btn {
@@ -272,15 +285,60 @@
     h.classList.add('show');
   }, 9000);
 </script>
-<script type="importmap">
-{
-  "imports": {
-    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js"
+<!-- The chapters. Every layout was found and checked by tools/solver: each needs every mechanism
+     it offers, and in chapter III parking the lift at one height, or only ever lowering or only
+     ever raising it, leaves the door out of reach (it has to sink to be walked over, then rise
+     twice to cast shade). After any change run python tools/solver/verify_levels.py, which reads
+     this block directly. theme is an index into THEMES. -->
+<script type="application/json" id="levels">
+[
+  {
+    "roman": "I", "name": "黄昏", "theme": 0,
+    "post": { "x": 3, "z": 3 }, "armR": 1.45, "start": "6,6", "startK": 5, "gateX": 1,
+    "pillars": [{ "x": 3, "z": 0, "h": 2.7, "top": "dome" }, { "x": 1, "z": 5, "h": 2.7, "top": "pyramid" }, { "x": 3, "z": 4, "h": 1.2 }],
+    "walls": [{ "x": 2, "z": 1, "len": 3, "axis": "z", "h": 1.0 }, { "x": 4, "z": 2, "len": 3, "axis": "z", "h": 1.0 }],
+    "slider": null, "lift": null,
+    "towers": { "backLeft": "dome", "backRight": "pyramid", "leftFront": "cone" },
+    "backWindows": [4.5, 5.4], "leftWindows": [1.3, 2.7, 4.1],
+    "intro": "她只能走在影子里。拖动光球，影子会跟着转",
+    "goal": "一边转动光球，一边走向那扇门",
+    "card": { "eyebrow": "Chapter I · Complete", "title": "门开了", "line": "她踩着影子穿过庭院，<br>走进了那扇门。" }
+  },
+  {
+    "roman": "II", "name": "清晨", "theme": 1,
+    "post": { "x": 3, "z": 3 }, "armR": 1.45, "start": "0,6", "startK": 6, "gateX": 2,
+    "pillars": [{ "x": 0, "z": 3, "h": 2.7, "top": "dome" }, { "x": 1, "z": 4, "h": 1.2 }],
+    "walls": [{ "x": 1, "z": 2, "len": 3, "axis": "x", "h": 1.0 }],
+    "slider": { "x": 4, "z": 3, "axis": "z", "n": 4, "h": 1.8, "start": 1 }, "lift": null,
+    "towers": { "backLeft": "cone", "backRight": "dome", "leftFront": "pyramid" },
+    "backWindows": [3.6, 4.5, 5.4], "leftWindows": [1.2, 4.8],
+    "intro": "右边那座塔可以推动。点它或拖动它，影子会跟着移动",
+    "goal": "转光球、推小塔，替她铺出去门口的路",
+    "card": { "eyebrow": "Chapter II · Complete", "title": "海风起", "line": "光转了三次，塔推了三回，<br>她终于走到了门前。" }
+  },
+  {
+    "roman": "III", "name": "星夜", "theme": 2,
+    "post": { "x": 3, "z": 3 }, "armR": 1.45, "start": "0,6", "startK": 7, "gateX": 1,
+    "pillars": [{ "x": 4, "z": 5, "h": 1.2 }],
+    "walls": [{ "x": 0, "z": 3, "len": 2, "axis": "z", "h": 1.0 }, { "x": 2, "z": 3, "len": 2, "axis": "z", "h": 1.0 }],
+    "slider": null,
+    "lift": { "x": 1, "z": 2, "heights": [0, 1.2, 2.6], "start": 1 },
+    "towers": { "backLeft": "pyramid", "backRight": "cone", "leftFront": "dome" },
+    "backWindows": [3.6, 4.5, 5.4], "leftWindows": [1.2, 5.0],
+    "intro": "那根柱子可以升降。点它或上下拖动，影子会变长变短",
+    "goal": "柱子降下能当路，升起能挡光，两样都要用上",
+    "card": { "eyebrow": "Chapter III · Complete", "title": "夜归", "line": "柱子降下又升起，<br>她才穿过了这片月光。" }
   }
-}
+]
 </script>
 <script type="module">
-import * as THREE from 'three';
+// three.js r160 ships with the page; the CDN copy is only a fallback (e.g. index.html opened from disk)
+let THREE;
+try {
+  THREE = await import('./vendor/three.module.min.js');
+} catch (err) {
+  THREE = await import('https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.min.js');
+}
 
 const hintEl = document.getElementById('hint');
 function fail(msg) {
@@ -326,50 +384,10 @@ const THEMES = [
     light: { hemi: 0.95, key: 0.45, warm: 0.2, orb: 5.2 },
   },
 ];
-const LEVELS = [
-  {
-    roman: 'I', name: '黄昏',
-    theme: THEMES[0],
-    post: { x: 3, z: 3 }, armR: 1.45, start: '6,6', startK: 5, gateX: 1,
-    pillars: [{ x: 3, z: 0, h: 2.7, top: 'dome' }, { x: 1, z: 5, h: 2.7, top: 'pyramid' }, { x: 3, z: 4, h: 1.2 }],
-    walls: [{ x: 2, z: 1, len: 3, axis: 'z', h: 1.0 }, { x: 4, z: 2, len: 3, axis: 'z', h: 1.0 }],
-    slider: null, lift: null,
-    towers: { backLeft: 'dome', backRight: 'pyramid', leftFront: 'cone' },
-    backWindows: [4.5, 5.4], leftWindows: [1.3, 2.7, 4.1],
-    intro: '她只能走在影子里。拖动光球，影子会跟着转',
-    goal: '一边转动光球，一边走向那扇门',
-    card: { eyebrow: 'Chapter I · Complete', title: '门开了', line: '她踩着影子穿过庭院，<br>走进了那扇门。' },
-  },
-  {
-    roman: 'II', name: '清晨',
-    theme: THEMES[1],
-    post: { x: 3, z: 3 }, armR: 1.45, start: '0,6', startK: 6, gateX: 2,
-    pillars: [{ x: 0, z: 3, h: 2.7, top: 'dome' }, { x: 1, z: 4, h: 1.2 }],
-    walls: [{ x: 1, z: 2, len: 3, axis: 'x', h: 1.0 }],
-    slider: { x: 4, z: 3, axis: 'z', n: 4, h: 1.8, start: 1 }, lift: null,
-    towers: { backLeft: 'cone', backRight: 'dome', leftFront: 'pyramid' },
-    backWindows: [3.6, 4.5, 5.4], leftWindows: [1.2, 4.8],
-    intro: '右边那座塔可以推动。拖动它，影子会跟着移动',
-    goal: '转光球、推小塔，替她铺出去门口的路',
-    card: { eyebrow: 'Chapter II · Complete', title: '海风起', line: '光转了三次，塔推了三回，<br>她终于走到了门前。' },
-  },
-  {
-    roman: 'III', name: '星夜',
-    theme: THEMES[2],
-    // Parking the lift at any one height, or only ever lowering or only ever raising it,
-    // leaves the door out of reach: it has to sink to be walked over, then rise twice to cast shade.
-    post: { x: 3, z: 3 }, armR: 1.45, start: '0,6', startK: 7, gateX: 1,
-    pillars: [{ x: 4, z: 5, h: 1.2 }],
-    walls: [{ x: 0, z: 3, len: 2, axis: 'z', h: 1.0 }, { x: 2, z: 3, len: 2, axis: 'z', h: 1.0 }],
-    slider: null,
-    lift: { x: 1, z: 2, heights: [0, 1.2, 2.6], start: 1 },
-    towers: { backLeft: 'pyramid', backRight: 'cone', leftFront: 'dome' },
-    backWindows: [3.6, 4.5, 5.4], leftWindows: [1.2, 5.0],
-    intro: '那根柱子可以升降。上下拖动它，影子会变长变短',
-    goal: '柱子降下能当路，升起能挡光，两样都要用上',
-    card: { eyebrow: 'Chapter III · Complete', title: '夜归', line: '柱子降下又升起，<br>她才穿过了这片月光。' },
-  },
-];
+// LEVELS lives in the #levels JSON block above this script, the one copy that both the game and
+// tools/solver/verify_levels.py read
+const LEVELS = JSON.parse(document.getElementById('levels').textContent);
+LEVELS.forEach((lv) => { lv.theme = THEMES[lv.theme]; });
 
 // ---------- the rules ----------
 const key = (x, z) => x + ',' + z;
@@ -514,7 +532,7 @@ renderer.shadowMap.type = THREE.PCFShadowMap;
 renderer.shadowMap.autoUpdate = false;
 const canvas = renderer.domElement;
 canvas.setAttribute('role', 'img');
-canvas.setAttribute('aria-label', '漂浮的庭院。旅人只能走在影子里：拖动或点击光球改变影子，第二章可以拖动一座小塔，第三章可以上下拖动一根升降柱，点击影子里的石板让她走过去。键盘按 R 转动光球。');
+canvas.setAttribute('aria-label', '漂浮的庭院。旅人只能走在影子里：点击或拖动光球改变影子，第二章可以推动一座小塔，第三章可以升降一根柱子，点击它们就会动一格；点击影子里的石板让她走过去。键盘按 R 转动光球，左右方向键推塔，上下方向键升降柱子。');
 stage.appendChild(canvas);
 
 const ISO = new THREE.Vector3(1, 1, 1).normalize();
@@ -1038,8 +1056,9 @@ const state = { level: 0, theta: 0, k: 0, pos: 0, s: 0, lh: 0, hi: 0, won: false
 let shade = new Set();
 const walker = { tile: '', step: null, path: [], pending: null, exit: null };
 let lampAnim = null, slideAnim = null, liftAnim = null;
+let switching = false;        // the old chapter is fading out and takes no input
 const mod8 = (k) => ((k % 8) + 8) % 8;
-const busy = () => state.won || !!walker.step || !!lampAnim || !!slideAnim || !!liftAnim;
+const busy = () => switching || state.won || !!walker.step || !!lampAnim || !!slideAnim || !!liftAnim;
 
 function tileWorld(id, out) {
   const t = TILES.get(id);
@@ -1143,12 +1162,46 @@ function animateLift(index) {
   const to = L.lift.heights[index];
   liftAnim = { from: state.lh, to, index, t: 0, dur: 0.3 + 0.2 * Math.min(2, Math.abs(to - state.lh)) };
 }
+// one notch at a time, for taps and keys; false when nothing moved
 function rotateBy(n) {
-  if (busy()) return;
+  if (busy()) return false;
   const target = (Math.round(state.theta / STEP) + n) * STEP;
   const r = lampReach(state.theta, target);
-  if (r.blocked) { onBlocked('light', 'lamp'); return; }
+  if (r.blocked) { onBlocked('light', 'lamp'); return false; }
   animateLamp(target);
+  return true;
+}
+function slideBy(n) {
+  if (busy() || !L.slider) return false;
+  const to = state.s + n;
+  if (to < 0 || to >= L.slider.n) { flashHint('塔已经推到头了'); return false; }
+  const r = slideReach(state.pos, to);
+  if (r.blocked) { onBlocked(r.blocked, 'slider'); return false; }
+  animateSlider(to);
+  return true;
+}
+function liftBy(n) {
+  if (busy() || !L.lift) return false;
+  const to = state.hi + n;
+  if (to < 0 || to >= L.lift.heights.length) { flashHint(n > 0 ? '柱子已经升到最高了' : '柱子已经降到底了'); return false; }
+  const r = liftReach(state.lh, L.lift.heights[to]);
+  if (r.blocked) { onBlocked(r.blocked, 'lift'); return false; }
+  animateLift(to);
+  return true;
+}
+// A tap moves a mechanism one notch the way it last went, turning back at the end of its track.
+// When the way on is blocked it shakes instead, and the next tap tries the other way, so a
+// player who only taps can never get stuck.
+const tapDir = { lamp: 1, slider: 1, lift: 1 };
+function tapMechanism(kind) {
+  if (busy()) return;
+  if (kind !== 'lamp') {
+    const at = kind === 'slider' ? state.s : state.hi;
+    const n = kind === 'slider' ? L.slider.n : L.lift.heights.length;
+    if (at + tapDir[kind] < 0 || at + tapDir[kind] >= n) tapDir[kind] *= -1;
+  }
+  const move = kind === 'lamp' ? rotateBy : kind === 'slider' ? slideBy : liftBy;
+  if (!move(tapDir[kind])) tapDir[kind] *= -1;
 }
 const BLOCK_TEXT = {
   lamp: '再转下去，光就会照到她',
@@ -1197,10 +1250,9 @@ function updateHint() {
 
 // ---------- walking ----------
 function walkTo(id) {
-  if (state.won || lampAnim || slideAnim || liftAnim || (press && press.dragging)) return;
+  if (switching || state.won || lampAnim || slideAnim || liftAnim || (press && press.dragging)) return;
   if (!TILES.has(id)) return;
   if (!shade.has(id)) {
-    if (id === LIFT_ID && state.lh > 0.01) { flashHint('柱子降到底，才能踩上去'); return; }
     flashTile(id);
     Sound.nope();
     flashHint('那里有光，她过不去', true);
@@ -1268,9 +1320,29 @@ function savedLevel() {
     return Number.isInteger(v) && v >= 0 && v < LEVELS.length ? v : 0;
   } catch (e) { return 0; }
 }
+// chapters she has walked out of, marked in the chapter menu
+function savedCleared() {
+  try {
+    const v = JSON.parse(localStorage.getItem('shadow-path-cleared') || '[]');
+    return new Set(Array.isArray(v) ? v.filter((i) => Number.isInteger(i) && i >= 0 && i < LEVELS.length) : []);
+  } catch (e) { return new Set(); }
+}
+const cleared = savedCleared();
+function showCleared() {
+  [...chaptersNav.children].forEach((b, i) => {
+    b.toggleAttribute('data-cleared', cleared.has(i));
+    b.setAttribute('aria-label', '第 ' + (i + 1) + ' 章 ' + LEVELS[i].name + (cleared.has(i) ? '，已通关' : ''));
+  });
+}
+function markCleared(i) {
+  cleared.add(i);
+  try { localStorage.setItem('shadow-path-cleared', JSON.stringify([...cleared].sort())); } catch (e) { /* storage unavailable */ }
+  showCleared();
+}
 function win() {
   state.won = true;
   state.winT = 0;
+  markCleared(state.level);
   showHint('');
   Sound.win();
   facing = Math.PI;
@@ -1305,6 +1377,7 @@ function resetLevel(data) {
   robeMat.opacity = scarfMat.opacity = 1;
   doorMat.color.copy(doorFrom);
   body.rotation.z = 0;
+  tapDir.lamp = tapDir.slider = tapDir.lift = 1;
   let k = L.startK, s = L.slider ? L.slider.start : 0, hi = L.lift ? L.lift.start : 0, tile = L.start;
   if (data && Number.isInteger(data.k) && TILES.has(data.tile) && data.tile !== GATE) {
     const ds = L.slider && Number.isInteger(data.s) ? data.s : s;
@@ -1335,11 +1408,19 @@ function enterLevel(i, data) {
   resetLevel(data);
 }
 function changeLevel(i) {
+  if (switching) return;
+  switching = true;
+  // while the old chapter fades she stops at the next tile and nothing else takes input
+  walker.path = [];
+  walker.pending = null;
+  press = null;
+  canvas.style.cursor = 'default';
   stage.classList.add('fading');
   card.classList.remove('show');
   setTimeout(() => {
     enterLevel(i);
     stage.classList.remove('fading');
+    switching = false;
   }, 450);
 }
 
@@ -1363,7 +1444,7 @@ function hitAt(cx, cy) {
     const ud = h.object.userData;
     if (ud.lamp) return { lamp: true };
     if (ud.slider) return { slider: true };
-    if (ud.lift) return { lift: true, tile: LIFT_ID };
+    if (ud.lift) return { lift: true };
     if (ud.tile) return { tile: ud.tile };
     return null;
   }
@@ -1390,7 +1471,7 @@ function heightAt(cx, cy) {
 let press = null;
 canvas.addEventListener('pointerdown', (e) => {
   Sound.ensure();
-  if (state.won || press) return;
+  if (switching || state.won || press) return;
   const hit = hitAt(e.clientX, e.clientY);
   press = { id: e.pointerId, x: e.clientX, y: e.clientY, hit, moved: 0, dragging: false };
   if (hit && !busy()) {
@@ -1421,7 +1502,7 @@ canvas.addEventListener('pointermove', (e) => {
     if (e.pointerType === 'mouse') {
       const h = hitAt(e.clientX, e.clientY);
       canvas.style.cursor = !h ? 'default'
-        : h.lift ? (state.lh < 0.01 ? 'pointer' : 'ns-resize')
+        : h.lift ? 'ns-resize'
         : (h.lamp || h.slider) ? 'grab'
         : shade.has(h.tile) ? 'pointer' : 'not-allowed';
     }
@@ -1498,18 +1579,32 @@ function endPress(e) {
     return;
   }
   if (e.type === 'pointercancel' || p.moved > 12 || !p.hit) return;
-  if (p.hit.lamp) rotateBy(1);
-  else if (p.hit.slider) flashHint('按住小塔，沿着地上的凹槽拖动它');
-  else if (p.hit.lift && state.lh > 0.01) flashHint('按住柱子上下拖动，它会升起或沉下');
+  // a flush lift is a mechanism first: she still walks across it on her way somewhere else
+  if (p.hit.lamp) tapMechanism('lamp');
+  else if (p.hit.slider) tapMechanism('slider');
+  else if (p.hit.lift) tapMechanism('lift');
   else if (p.hit.tile) walkTo(p.hit.tile);
 }
 canvas.addEventListener('pointerup', endPress);
 canvas.addEventListener('pointercancel', endPress);
 
+// R / Shift+R turns the orb, left / right pushes the tower the way the arrow points on screen,
+// up / down raises and lowers the lift
 window.addEventListener('keydown', (e) => {
-  if ((e.key === 'r' || e.key === 'R') && !e.metaKey && !e.ctrlKey) {
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  const k = e.key;
+  if (k === 'r' || k === 'R') {
     Sound.ensure();
     rotateBy(e.shiftKey ? -1 : 1);
+  } else if (L.slider && (k === 'ArrowLeft' || k === 'ArrowRight')) {
+    const right = Math.sign(L.slider.axis === 'x' ? SCREEN_R.x : SCREEN_R.z);
+    e.preventDefault();
+    Sound.ensure();
+    slideBy(k === 'ArrowRight' ? right : -right);
+  } else if (L.lift && (k === 'ArrowUp' || k === 'ArrowDown')) {
+    e.preventDefault();
+    Sound.ensure();
+    liftBy(k === 'ArrowUp' ? 1 : -1);
   }
 });
 const soundBtn = document.getElementById('btn-sound');
@@ -1520,8 +1615,8 @@ soundBtn.addEventListener('click', () => {
   Sound.toggle(on);
   Sound.ensure();
 });
-document.getElementById('btn-reset').addEventListener('click', () => { Sound.ensure(); resetLevel(); });
-document.getElementById('btn-again').addEventListener('click', () => { Sound.ensure(); resetLevel(); });
+document.getElementById('btn-reset').addEventListener('click', () => { Sound.ensure(); if (!switching) resetLevel(); });
+document.getElementById('btn-again').addEventListener('click', () => { Sound.ensure(); if (!switching) resetLevel(); });
 nextBtn.addEventListener('click', () => {
   Sound.ensure();
   changeLevel(state.level === LEVELS.length - 1 ? 0 : state.level + 1);
@@ -1604,6 +1699,7 @@ function tickWorld(dt) {
 function start(data) {
   const lv = data && Number.isInteger(data.level) && data.level >= 0 && data.level < LEVELS.length ? data.level : savedLevel();
   enterLevel(lv, data && data.level === lv ? data : null);
+  showCleared();
   fit();
   requestAnimationFrame((t) => { clock.last = t; loop(t); });
 }

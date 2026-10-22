@@ -7,7 +7,7 @@ Rules mirrored from the game:
 
 Usage:
   python shadow_design.py <seed>    search for new layouts (R and H are set to the game's 1.45 / 2.1)
-  python shadow_design.py verify    re-check the shipped chapter I layout (LEVEL) at fine resolution
+  python shadow_design.py verify    re-check chapter I as it ships (read from index.html) at fine resolution
 """
 import math, random, sys
 from collections import deque
@@ -144,7 +144,7 @@ def draw(obs, res, start, marks=()):
             row = ''
             for x in range(-1, N):
                 t = (x, z)
-                if t == (1, -1): row += 'G'
+                if t == (GATE_IN[0], -1): row += 'G'
                 elif z == -1 or x == -1: row += '#'
                 elif t == POST: row += 'L'
                 elif t in res['blocked']: row += 'X'
@@ -211,16 +211,16 @@ def walk_len(res):
     return total
 
 
-LEVEL = [('pillar', 3, 0, 2.7), ('pillar', 3, 4, 1.2), ('pillar', 1, 5, 2.7),
-         ('wall', 2, 1, 3, 'z', 1.0), ('wall', 4, 2, 3, 'z', 1.0)]
-
-
 def verify():
-    global SAMPLES
-    SAMPLES = 90
-    res = analyse(LEVEL, (6, 6), 5)
+    """Re-check chapter I exactly as it ships, read from index.html."""
+    global R, H, POST, GATE_IN, SAMPLES
+    import levels
+    lv = levels.load()[0]
+    R, H, POST, GATE_IN, SAMPLES = lv['armR'], levels.lamp_height(), levels.post(lv), (lv['gateX'], 0), 90
+    obs, start = levels.obstacles(lv), levels.tile(lv['start'])
+    res = analyse(obs, start, lv['startK'])
     print('fine-sampled solution:', res and res['path'], 'rot', res and res['rot'])
-    boxes = boxes_of(LEVEL)
+    boxes = boxes_of(obs)
     for k in sorted(set(k for _, k in res['path'])):
         amb = []
         for t in res['tiles']:
@@ -229,11 +229,10 @@ def verify():
             if len(vals) > 1:
                 amb.append(t)
         print(f'k={k} edge tiles:', amb)
-    draw(LEVEL, res, (6, 6))
+    draw(obs, res, start)
 
 
 if __name__ == '__main__' and len(sys.argv) > 1 and sys.argv[1] == 'verify':
-    R, H = 1.45, 2.1
     verify()
     sys.exit()
 

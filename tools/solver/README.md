@@ -5,6 +5,7 @@
 | 脚本 | 用途 |
 | --- | --- |
 | `verify_levels.py` | 复核已上线的三章：能解、每个机关都非用不可、第三关没有捷径。改关卡后必跑 |
+| `levels.py` | 从 `index.html` 的 `<script type="application/json" id="levels">` 块读出关卡，以及 `LAMP_Y`（光球高度） |
 | `shadow_design.py` | 第一章（只有光球）的随机搜索；`verify` 参数复核第一章 |
 | `level2.py` | 第二章（光球 + 推塔）的随机搜索 |
 | `level3.py` | 第三章（光球 + 升降柱）的随机搜索，含“停在某高度不动必须无解”“只升或只降必须无解”的筛选 |
@@ -18,4 +19,4 @@ python tools/solver/level3.py 51 3500         # 随机种子 51，生成 3500 �
 
 脚本里的影子判定、机关步进和游戏 `index.html` 保持一致：一块石板取 5 个采样点，至少 3 个看不见光球才算影子。粗筛只看中心点，入选前用完整规则复核。
 
-改了 `index.html` 里 `LEVELS` 的布局，要同步改 `verify_levels.py` 里对应的数据，再跑一遍。
+关卡数据只有一份，就是 `index.html` 里的 JSON 块。`verify_levels.py` 直接读它，按每章有哪种机关（只有光球 / 小塔 / 柱子）选对应的求解器，所以改关卡时不用再改这里的任何文件。
